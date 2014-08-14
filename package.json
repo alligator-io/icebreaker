@@ -1,0 +1,28 @@
+{
+  "name": "icebreaker",
+  "version": "0.1.0",
+  "description": "pull-stream based library",
+  "main": "index.js",
+  "scripts": {
+    "test": "set -e; for t in test/*.js; do node $t; done"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alligator-io/icebreaker.git"
+  },
+  "keywords": [
+    "pull-stream",
+    "streams"
+  ],
+  "author": "Markus Wunderlin",
+  "license": "MIT",
+  "dependencies": {
+    "pull-fork": "^2.0.0",
+    "pull-pair": "^1.0.0",
+    "pull-stream": "^2.24.0",
+    "stream-to-pull-stream": "^1.4.1"
+  },
+  "devDependencies": {
+    "tape": "^2.13.3"
+  }
+}
