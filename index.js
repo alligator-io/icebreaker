@@ -61,9 +61,8 @@ var mixin = icebreaker.mixin = function(obj, dest) {
         })(key, value)
       }
       else if (typeof value === 'object' && key !== 'prototype') {
-        console.log('key',key)
         dest[key] = value
-        console.log(value)
+
         var w = function() {
           if (!(this instanceof w)) return new w()
           icebreaker.call(this)
