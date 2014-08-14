@@ -41,69 +41,93 @@ icebreaker.prototype.add = function() {
   return this
 }
 
-var mixin = icebreaker.mixin = function(obj) {
+var mixin = icebreaker.mixin = function(obj, dest) {
+  if (!dest) dest = icebreaker
+
   for ( var key in obj) {
     if (obj.hasOwnProperty(key)) {
       var value = obj[key]
-      if (typeof value === 'function') {
+
+      if (typeof value === 'function' && key !== 'prototype' &&
+      key !== 'pull' && key !== 'keys' && typeof key === 'string') {
         (function(key, value) {
-          icebreaker[key] = function() {
+          dest[key] = function() {
             return value.apply(this, [].slice.call(arguments))
           }
-          icebreaker.prototype[key] = function() {
-            var r = icebreaker[key].apply(this, [].slice.call(arguments))
+          dest.prototype[key] = function() {
+            var r = dest[key].apply(this, [].slice.call(arguments))
             return this._chain === true ? this.add(r) : r
           }
         })(key, value)
+      }
+      else if (typeof value === 'object' && key !== 'prototype') {
+        console.log('key',key)
+        dest[key] = value
+        console.log(value)
+        var w = function() {
+          if (!(this instanceof w)) return new w()
+          icebreaker.call(this)
+        }
+
+        util.inherits(w, icebreaker)
+
+        icebreaker.mixin(value, w)
+ 
+        dest.prototype[key] = function() {
+          var s =  new w()
+          s._commands = this._commands
+          s._chain = this._chain
+          return s
+        }
       }
     }
   }
 }
 
-mixin(pull)
-
-icebreaker.chain = icebreaker.prototype.chain = function() {
-  if (!(this instanceof icebreaker)) {
-    var i = Object.create(icebreaker.prototype);
-    i._chain = true
-    icebreaker.apply(i, [].slice.call(arguments));
-    return i
-  }
-
-  this._chain = true
-  init.apply(this, [].slice.call(arguments))
-  return this
-}
-
-icebreaker.prototype.source = function(s) {
-  if (s instanceof stream.Duplex || s instanceof stream.Readable ||
-  s instanceof stream.Transform)
-    return toPullStream.source.apply(toPullStream, arguments)
-  return this.Source.apply(this, arguments)
-}
-
-icebreaker.prototype.through = function() {
-  return this.Through.apply(this, arguments)
-}
-
-icebreaker.prototype.sink = function(str) {
-  if (str instanceof stream.Writable)
-    return toPullStream.sink.apply(toPullStream, arguments)
-  return this.Sink.apply(this, arguments)
-}
-
 icebreaker.prototype.pull = function() {
-  for ( var key in this._commands) {
-    if (this._commands[key] instanceof icebreaker) {
-      this._commands[key].pull()
+  if(util.isArray(this._commands))
+    for ( var key in this._commands) {
+      if (this._commands[key] instanceof icebreaker) {
+        this._commands[key].pull()
+      }
     }
-  }
-  var p = pull.apply(this, this._commands)
-  this.commands = []
+
+  var p = pull.apply(pull, this._commands)
+  this._commands = []
   return p
 }
 
-mixin({ fork : require('pull-fork') })
-mixin({ pair : require('pull-pair')})
+mixin(pull)
 
-module.exports = icebreaker
+mixin({
+  fork : require('pull-fork'),
+  pair : require('pull-pair'),
+  source:function(s) {
+    if (s instanceof stream.Duplex || s instanceof stream.Readable ||
+    s instanceof stream.Transform)
+      return toPullStream.source.apply(toPullStream, arguments)
+      return this.Source.apply(this, arguments)
+  },
+  through:function() {
+    return this.Through.apply(this, arguments)
+  },
+  sink:function(str) {
+    if (str instanceof stream.Writable)
+      return toPullStream.sink.apply(toPullStream, arguments)
+    return this.Sink.apply(this, arguments)
+  },
+  chain:function() {
+    if (!(this instanceof icebreaker)) {
+      var i = Object.create(icebreaker.prototype);
+      i._chain = true
+      icebreaker.apply(i, [].slice.call(arguments));
+      return i
+    }
+
+    this._chain = true
+    init.apply(this, [].slice.call(arguments))
+    return this
+  }
+})
+
+module.exports=icebreaker
