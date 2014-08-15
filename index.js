@@ -48,8 +48,7 @@ var mixin = icebreaker.mixin = function(obj, dest) {
     if (obj.hasOwnProperty(key)) {
       var value = obj[key]
 
-      if (typeof value === 'function' && key !== 'prototype' &&
-      key !== 'pull' && key !== 'keys' && typeof key === 'string') {
+      if (typeof value === 'function' && typeof key === 'string') {
         (function(key, value) {
           dest[key] = function() {
             return value.apply(this, [].slice.call(arguments))
@@ -61,23 +60,24 @@ var mixin = icebreaker.mixin = function(obj, dest) {
         })(key, value)
       }
       else if (typeof value === 'object' && key !== 'prototype') {
-        dest[key] = value
+        ;(function(key,value){
+          dest[key] = value
+          var w = function() {
+            if (!(this instanceof w)) return new w()
+            icebreaker.call(this)
+          }
 
-        var w = function() {
-          if (!(this instanceof w)) return new w()
-          icebreaker.call(this)
-        }
+          util.inherits(w, icebreaker)
 
-        util.inherits(w, icebreaker)
+          icebreaker.mixin(value, w)
 
-        icebreaker.mixin(value, w)
- 
-        dest.prototype[key] = function() {
-          var s =  new w()
-          s._commands = this._commands
-          s._chain = this._chain
-          return s
-        }
+          dest.prototype[key] = function() {
+            var s =  new w()
+            s._commands = this._commands
+            s._chain = this._chain
+            return s
+          }
+        })(key,value)
       }
     }
   }
