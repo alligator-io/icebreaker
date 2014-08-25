@@ -111,7 +111,7 @@ mixin({
     return this.Through.apply(this, arguments)
   },
   sink:function(str) {
-    if (str instanceof stream.Writable)
+    if (str instanceof stream.Writable || str instanceof stream.Duplex)
       return toPullStream.sink.apply(toPullStream, arguments)
     return this.Sink.apply(this, arguments)
   },
