@@ -125,6 +125,17 @@ mixin({
     this._chain = true
     init.apply(this, [].slice.call(arguments))
     return this
+  },
+  params : function(){
+    return icebreaker
+    .chain()
+    .values([].slice.call(arguments))
+    .map(function(arg){
+     if(!Array.isArray(arg))return [arg]
+     return arg
+    })
+    .flatten()
+    .pull()
   }
 })
 
