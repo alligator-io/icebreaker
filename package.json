@@ -1,6 +1,6 @@
 {
   "name": "icebreaker",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "pull-stream based library",
   "main": "index.js",
   "scripts": {
@@ -19,7 +19,7 @@
   "dependencies": {
     "pull-fork": "^2.0.0",
     "pull-pair": "^1.0.0",
-    "pull-stream": "^2.24.0",
+    "pull-stream": "^2.25.0",
     "stream-to-pull-stream": "^1.4.1"
   },
   "devDependencies": {
