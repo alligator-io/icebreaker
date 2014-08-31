@@ -102,16 +102,15 @@ mixin({
   fork : require('pull-fork'),
   pair : require('pull-pair'),
   source:function(s) {
-    if (s instanceof stream.Duplex || s instanceof stream.Readable ||
-    s instanceof stream.Transform)
+    if (s instanceof stream.Stream)
       return toPullStream.source.apply(toPullStream, arguments)
-      return this.Source.apply(this, arguments)
+    return this.Source.apply(this, arguments)
   },
   through:function() {
     return this.Through.apply(this, arguments)
   },
   sink:function(str) {
-    if (str instanceof stream.Writable || str instanceof stream.Duplex)
+    if (str instanceof stream.Stream && str.writable)
       return toPullStream.sink.apply(toPullStream, arguments)
     return this.Sink.apply(this, arguments)
   },
