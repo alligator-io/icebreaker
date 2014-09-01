@@ -1,6 +1,6 @@
 {
   "name": "icebreaker",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "pull-stream based library",
   "main": "index.js",
   "scripts": {
@@ -17,6 +17,8 @@
   "author": "Markus Wunderlin",
   "license": "MIT",
   "dependencies": {
+    "pull-cat": "^1.1.5",
+    "pull-core": "^1.0.0",
     "pull-fork": "^2.0.0",
     "pull-pair": "^1.0.0",
     "pull-stream": "^2.25.0",
