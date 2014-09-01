@@ -2,6 +2,8 @@ icebreaker
 ============
 [pull-stream](https://github.com/dominictarr/pull-stream) based library for Node.js.
 
+[![NPM](https://nodei.co/npm/icebreaker.png?downloads=true&download=true)](https://nodei.co/npm/icebreaker/)
+
 ## Examples
 
 ```javascript
