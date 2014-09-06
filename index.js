@@ -8,10 +8,12 @@ function init() {
     for ( var key in arguments) {
       if (arguments.hasOwnProperty(key)) {
         var arg = arguments[key]
-        if (util.isArray(arg)) {
-          if (this._chain === false) this._commands.push(this.values(arg))
-          else this.values(arg)
-        } else this._commands.push(arg)
+        if (util.isArray(arg) || typeof arg === 'string' ||
+        typeof arg === 'number') {
+          if (this._chain === false) this._commands.push(this.params(arg))
+          else this.params(arg)
+        }
+        else this._commands.push(arg)
       }
     }
 
