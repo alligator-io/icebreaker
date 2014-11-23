@@ -108,12 +108,16 @@ mixin({
       return toPullStream.source.apply(toPullStream, arguments)
     return this.Source.apply(this, arguments)
   },
-  through:function() {
+  through:function(s) {
+    if (s instanceof stream.Stream)
+      return toPullStream.apply(toPullStream, arguments)
+
     return this.Through.apply(this, arguments)
   },
   sink:function(str) {
-    if (str instanceof stream.Stream && str.writable)
+    if (str instanceof stream.Stream && str.writable){
       return toPullStream.sink.apply(toPullStream, arguments)
+    }
     return this.Sink.apply(this, arguments)
   },
   chain:function() {
