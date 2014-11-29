@@ -18,7 +18,7 @@ function init() {
     }
 
     if (this._chain === false) {
-      this.pull()
+      return this.pull()
     }
   }
 }
@@ -26,7 +26,8 @@ function init() {
 function icebreaker() {
   if (!(this instanceof icebreaker)) {
     var i = Object.create(icebreaker.prototype);
-    icebreaker.apply(i, [].slice.call(arguments));
+    var p = icebreaker.apply(i, [].slice.call(arguments))
+    if(p)return p
     return i
   }
 
@@ -35,7 +36,8 @@ function icebreaker() {
   /* jshint eqnull:true */
   if (this._chain == null) this._chain = false
 
-  init.apply(this, [].slice.call(arguments))
+  var p = init.apply(this, [].slice.call(arguments))
+  if(p)return p
 }
 
 icebreaker.prototype.add = function() {
@@ -89,12 +91,15 @@ icebreaker.prototype.pull = function() {
   if(util.isArray(this._commands))
     for ( var key in this._commands) {
       if (this._commands[key] instanceof icebreaker) {
-        this._commands[key].pull()
+        var r = this._commands[key].pull()
+        if(r) this._commands[key]=r
       }
     }
 
   var p = pull.apply(pull, this._commands)
+
   this._commands = []
+
   return p
 }
 
