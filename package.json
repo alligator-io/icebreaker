@@ -22,7 +22,7 @@
     "pull-fork": "^2.1.0",
     "pull-pair": "^1.0.0",
     "pull-stream": "^2.26.0",
-    "stream-to-pull-stream": "1.5.0"
+    "stream-to-pull-stream": "1.6.1"
   },
   "devDependencies": {
     "tape": "^2.13.3"

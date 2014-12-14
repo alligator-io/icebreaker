@@ -57,8 +57,11 @@ var mixin = icebreaker.mixin = function(obj, dest) {
           dest[key] = function() {
             return value.apply(this, [].slice.call(arguments))
           }
+          if(value && value.type)
+          dest[key].type=value.type
+          
           dest.prototype[key] = function() {
-            var r = dest[key].apply(this, [].slice.call(arguments))
+          var r = dest[key].apply(this, [].slice.call(arguments))
             return this._chain === true ? this.add(r) : r
           }
         })(key, value)
@@ -72,8 +75,12 @@ var mixin = icebreaker.mixin = function(obj, dest) {
           }
 
           util.inherits(w, icebreaker)
-
+          if(Object.keys(value).length>0)
           icebreaker.mixin(value, w)
+          else {
+            console.log(key)
+            dest[key] = w
+          }
 
           dest.prototype[key] = function() {
             var s =  new w()
@@ -107,7 +114,10 @@ mixin(pull)
 
 mixin({
   fork : require('pull-fork'),
-  pair : require('pull-pair'),
+  pair : function(s){
+    if(s instanceof stream.Duplex)return toPullStream.duplex(s)
+    return require('pull-pair').apply(this,arguments)
+  },
   source:function(s) {
     if (s instanceof stream.Stream)
       return toPullStream.source.apply(toPullStream, arguments)
@@ -147,6 +157,20 @@ mixin({
     })
     .flatten()
     .pull()
+  },
+  cleanup:function(func){
+    return function(read) {
+      var ended
+      return function (abort,callback){
+        read(abort, function next(end, data) {
+          if(ended)return
+          if(end){
+            func(end)
+            return callback(ended=end)
+          }
+          callback(end,data)
+        })
+      }}
   }
 })
 
