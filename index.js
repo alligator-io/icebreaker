@@ -78,7 +78,6 @@ var mixin = icebreaker.mixin = function(obj, dest) {
           if(Object.keys(value).length>0)
           icebreaker.mixin(value, w)
           else {
-            console.log(key)
             dest[key] = w
           }
 
