@@ -1,4 +1,4 @@
-var _ = require('icebreaker')
+var _ = require('../')
 var test = require('tape')
 var util = require('util')
 require('tape')('pull 1', function(t) {

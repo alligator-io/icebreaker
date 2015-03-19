@@ -1,4 +1,4 @@
-var _ = require('icebreaker')
+var _ = require('../')
 var test = require('tape')
 require('tape')('async-map 1', function(t) {
   _(_.chain()

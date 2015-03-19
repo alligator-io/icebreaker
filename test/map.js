@@ -1,5 +1,5 @@
 var test = require('tape')
-var _ = require('icebreaker')
+var _ = require('../')
 
 test('map 1', function(t) {
   _([ 1, 2, 3 ],

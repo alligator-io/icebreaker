@@ -1,5 +1,5 @@
 var test = require('tape')
-var _ = require('icebreaker')
+var _ = require('../')
 
 test('params', function(t) {
   _(
