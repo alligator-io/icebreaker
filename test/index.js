@@ -1,7 +1,7 @@
 var _ = require('../')
 var test = require('tape')
 var util = require('util')
-require('tape')('pull 1', function(t) {
+test('pull 1', function(t) {
   var first = _(
     _.count(),
     _.take(30),
@@ -23,7 +23,7 @@ require('tape')('pull 1', function(t) {
 
 })
 
-require('tape')('pull 2', function(t) {
+test('pull 2', function(t) {
    _(
      _.chain()
      .count()
@@ -41,7 +41,7 @@ require('tape')('pull 2', function(t) {
 
 })
 
-require('tape')('pull 3', function(t) {
+test('pull 3', function(t) {
 
    _(
      _.chain()
