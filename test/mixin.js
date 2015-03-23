@@ -1,5 +1,5 @@
 var test = require('tape')
-var _ = require('../')
+var _ = require('../lib/icebreaker')
 
 test('mixin 1', function(t) {
  t.plan(4)
