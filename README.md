@@ -4,6 +4,8 @@ icebreaker
 
 [![NPM](https://nodei.co/npm/icebreaker.png?downloads=true&download=true)](https://nodei.co/npm/icebreaker/)
 
+[![Build Status](https://travis-ci.org/alligator-io/icebreaker.svg?branch=master)](https://travis-ci.org/alligator-io/icebreaker)
+
 ## Examples
 
 ```javascript
