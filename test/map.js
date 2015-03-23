@@ -27,7 +27,6 @@ test('map 2', function (t) {
     .collect(function (err, data) {
       t.notOk(err)
       t.deepEqual(data, [10, 20, 30])
-      t.end()
     })
   )
 })
