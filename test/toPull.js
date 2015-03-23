@@ -68,34 +68,36 @@ test('fs.createWriteStream to sink with an error', function (t) {
   )
 })
 
-test('stream.PassThrough to pair', function (t) {
-  t.plan(12)
-  _(
-    count(10),
-    _.pair(stream.PassThrough({
-      objectMode: true
-    })),
-    _.drain(function (data) {
-      t.equal(typeof data ,'string')
-    },
-    function (err) {
-      t.notOk(err)
-    })
-  )
-})
+if(stream.PassThrough){
+  test('stream.PassThrough to pair', function (t) {
+    t.plan(12)
+    _(
+      count(10),
+      _.pair(stream.PassThrough({
+        objectMode: true
+      })),
+      _.drain(function (data) {
+        t.equal(typeof data ,'string')
+      },
+      function (err) {
+        t.notOk(err)
+      })
+    )
+  })
 
-test('stream.PassThrough to through', function (t) {
-  t.plan(12)
-  _(
-    count(10),
-    _.through(stream.PassThrough({
-      objectMode: true
-    })),
-    _.drain(function (data) {
-      t.equal(typeof data ,'string')
-    },
-    function (end) {
-      t.notOk(end)
-    })
-  )
-})
+  test('stream.PassThrough to through', function (t) {
+    t.plan(12)
+    _(
+      count(10),
+      _.through(stream.PassThrough({
+        objectMode: true
+      })),
+      _.drain(function (data) {
+        t.equal(typeof data ,'string')
+      },
+      function (end) {
+        t.notOk(end)
+      })
+    )
+  })
+}
