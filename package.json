@@ -4,7 +4,11 @@
   "description": "pull-stream based library",
   "main": "index.js",
   "scripts": {
-    "test": "set -e; for t in test/*.js; do node $t; done"
+    "build": "npm run browserify && npm run dist",
+    "test": "node_modules/.bin/tape test/*.js test/node/*.js",
+    "test-browser": "node_modules/.bin/testling",
+    "browserify": "node_modules/.bin/browserify lib/icebreaker.js -o dist/icebreaker.js -s icebreaker",
+    "dist": "node_modules/.bin/uglifyjs dist/icebreaker.js -o dist/icebreaker.min.js"
   },
   "repository": {
     "type": "git",
@@ -25,6 +29,22 @@
     "stream-to-pull-stream": "^1.6.1"
   },
   "devDependencies": {
-    "tape": "^2.13.3"
+    "browserify": "^9.0.3",
+    "tape": "^2.13.3",
+    "testling": "^1.7.1",
+    "uglifyjs": "^2.4.10"
+  },
+  "testling": {
+    "files": "test/*.js",
+    "browsers": [
+      "ie/6..latest",
+      "chrome/22..latest",
+      "firefox/16..latest",
+      "safari/latest",
+      "opera/11.0..latest",
+      "iphone/6",
+      "ipad/6",
+      "android-browser/latest"
+    ]
   }
 }

@@ -1,9 +1,10 @@
-var _ = require('../')
+var _ = require('../../')
 var fs = require('fs')
 var test = require('tape')
 var stream = require('stream')
-var createReadStream = fs.createReadStream.bind(null, __dirname + '/../package.json')
-var createWriteStream = fs.createWriteStream.bind(null, __dirname + '/.test')
+var path = require('path')
+var createReadStream = fs.createReadStream.bind(null,path.join( __dirname ,'/../../package.json'))
+var createWriteStream = fs.createWriteStream.bind(null,path.join( __dirname ,'/.test'))
 
 function count(n) {
   return _(
