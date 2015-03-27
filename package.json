@@ -5,8 +5,10 @@
   "main": "index.js",
   "scripts": {
     "build": "npm run browserify && npm run dist",
-    "test": "node_modules/.bin/tape test/*.js test/node/*.js",
-    "test-browser": "node_modules/.bin/testling",
+    "test":"npm run test-local && npm run test-zuul",
+    "test-local": "node_modules/.bin/tape test/*.js test/node/*.js",
+    "test-browser": "node_modules/.bin/zuul --open --local 8087 -- test/*.js",
+    "test-zuul": "node_modules/.bin/zuul -- test/*.js",
     "browserify": "node_modules/.bin/browserify lib/icebreaker.js -o dist/icebreaker.js -s icebreaker",
     "dist": "node_modules/.bin/uglifyjs dist/icebreaker.js -o dist/icebreaker.min.js"
   },
@@ -29,22 +31,9 @@
     "stream-to-pull-stream": "^1.6.1"
   },
   "devDependencies": {
-    "browserify": "^9.0.3",
-    "tape": "^2.13.3",
-    "testling": "^1.7.1",
-    "uglifyjs": "^2.4.10"
-  },
-  "testling": {
-    "files": "test/*.js",
-    "browsers": [
-      "ie/6..latest",
-      "chrome/22..latest",
-      "firefox/16..latest",
-      "safari/latest",
-      "opera/11.0..latest",
-      "iphone/6",
-      "ipad/6",
-      "android-browser/latest"
-    ]
+    "browserify": "9.0.3",
+    "tape": "3.5.0",
+    "uglifyjs": "2.4.10",
+    "zuul": "2.1.1"
   }
 }
