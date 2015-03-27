@@ -1,9 +1,9 @@
 ui: tape
 browsers:
   - name: chrome
-    version: 26..latest
+    version: 36..latest
   - name: firefox
-    version: 16..latest
+    version: 31..latest
   - name: ie
     version: 8..latest
   - name: safari
