@@ -2,9 +2,6 @@ icebreaker
 ============
 [pull-stream](https://github.com/dominictarr/pull-stream) based library for Node.js.
 
-[![browser support](https://ci.testling.com/alligator-io/icebreaker.png)
-](https://ci.testling.com/alligator-io/icebreaker)
-
 [![Travis](https://img.shields.io/travis/alligator-io/icebreaker.svg)](https://travis-ci.org/alligator-io/icebreaker)
 [![NPM](https://img.shields.io/npm/dm/icebreaker.svg)](https://www.npmjs.com/package/icebreaker)
 
