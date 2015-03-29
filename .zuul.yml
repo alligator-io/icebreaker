@@ -4,16 +4,21 @@ capabilities:
   record-screenshots: false
 browsers:
   - name: android
-    version: 4.3..latest
+    version: [4.3..latest]
+    platform: Linux
   - name: firefox
     version: 35..latest
+    platform: Windows 2012 R2
   - name: chrome
     version: 40..latest
+    platform: Windows 2012 R2
   - name: ie
-    version: 8..latest
+    version: 8..11
+    platform: Windows 2008
   - name: safari
     version: 7..latest
   - name: ipad
     version: [6.1,7.1,8.1..latest]
   - name: opera
     version: 11..latest
+    platform: Windows 2003
