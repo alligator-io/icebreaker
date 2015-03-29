@@ -6,6 +6,4 @@ node_js:
   - "0.10"
   - "iojs"
   - "iojs-v1.0.4"
-addons:
-  sauce_connect: true
 before_install: npm install -g npm@~1.4.6
