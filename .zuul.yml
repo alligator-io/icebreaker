@@ -1,4 +1,7 @@
 ui: tape
+capabilities:
+  record-video: false
+  record-screenshots: false
 browsers:
   - name: android
     version: 4.4
