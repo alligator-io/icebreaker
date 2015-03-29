@@ -5,13 +5,13 @@ capabilities:
   avoid-proxy: true
 browsers:
   - name: android
-    version: [4.3..latest]
+    version: [4.4,5.0]
     platform: Linux
   - name: firefox
-    version: 35..latest
+    version: [35,36]
     platform: Windows 2012 R2
   - name: chrome
-    version: 40..latest
+    version: [40,41]
     platform: Windows 2012 R2
   - name: ie
     version: 8
@@ -24,5 +24,5 @@ browsers:
   - name: ipad
     version: [6.1,7.1,8.1..latest]
   - name: opera
-    version: 11..latest
+    version: latest
     platform: Windows 2003
