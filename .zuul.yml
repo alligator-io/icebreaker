@@ -14,10 +14,7 @@ browsers:
     version: [40,41]
     platform: Windows 2012 R2
   - name: ie
-    version: 8
-    platform: Windows 2003
-  - name: ie
-    version: 9..11
+    version: 8..11
     platform: Windows 2008
   - name: safari
     version: 7..latest
