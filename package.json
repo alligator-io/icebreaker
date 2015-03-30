@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "npm run browserify && npm run dist",
-    "test":"npm run test-local && npm run test-zuul",
+    "test":"node scripts/test.js",
     "test-local": "node_modules/.bin/tape test/*.js test/node/*.js",
     "test-browser": "node_modules/.bin/zuul --open --local 8087 -- test/*.js",
     "test-zuul": "node_modules/.bin/zuul -- test/*.js",
