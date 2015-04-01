@@ -1,7 +1,14 @@
-var spawn = require('child_process').spawn
+var childProcess=require('child_process')
 
-if(process.env.ENABLE_ZUUL===true){
-  return spawn('npm run test-zuul',{ stdio: 'inherit' })
+var run = function(command){
+  var c = childProcess.spawn('npm',['run',command],{ stdio: 'inherit'} )
+  c.once('exit',function(code){
+    process.exit(code)
+  })
 }
 
-spawn('npm run test-local',{ stdio: 'inherit' })
+if(process.env.ENABLE_ZUUL==='true'){
+  return run('test-zuul')
+}
+
+run('test-local')
