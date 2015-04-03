@@ -33,7 +33,7 @@ _(
 ```html
 <html>
 <head>
-  <script src="bower_components/dist/icebreaker.js"></script>
+  <script src="bower_components/icebreaker/dist/icebreaker.js"></script>
 </head>
 <body>
   <script>
