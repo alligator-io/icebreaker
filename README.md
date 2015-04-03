@@ -12,7 +12,7 @@ npm install --save icebreaker
 ```
 ## Bower
 ```bash
-bower install icebreaker --save
+bower install icebreaker.js --save
 ```
 ## Usage
 ### In Node.js
