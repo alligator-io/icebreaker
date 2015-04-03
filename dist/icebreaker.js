@@ -60,6 +60,10 @@ var mixin = icebreaker.mixin = function (obj, dest) {
             var r = dest[key].apply(this, [].slice.call(arguments))
             return this._chain === true ? this.add(r) : r
           }
+          if(value.type){
+            dest[key].type=value.type
+            dest.prototype[key].type = value.type
+          }
         })(key, value)
       } else if (typeof value === 'object' && key !== 'prototype') {;
         (function (key, value) {
@@ -455,7 +459,7 @@ var maybe = require('./maybe')(exports)
 for(var k in maybe)
   exports[k] = maybe[k]
 
-exports.Duplex  =
+exports.Duplex  = 
 exports.Through = exports.pipeable       = u.Through
 exports.Source  = exports.pipeableSource = u.Source
 exports.Sink    = exports.pipeableSink   = u.Sink
@@ -528,13 +532,13 @@ module.exports = function (pull) {
 }
 
 },{"pull-core":9}],9:[function(require,module,exports){
-exports.id =
+exports.id = 
 function (item) {
   return item
 }
 
-exports.prop =
-function (map) {
+exports.prop = 
+function (map) {  
   if('string' == typeof map) {
     var key = map
     return function (data) { return data[key] }
@@ -578,7 +582,7 @@ function Source (createRead) {
 
 
 var Through =
-exports.Through =
+exports.Through = 
 function (createRead) {
   return function () {
     var args = [].slice.call(arguments)
@@ -592,7 +596,7 @@ function (createRead) {
       //pipeing to from this reader should compose...
     }
     reader.pipe = function (read) {
-      piped.push(read)
+      piped.push(read) 
       if(read.type === 'Source')
         throw new Error('cannot pipe ' + reader.type + ' to Source')
       reader.type = read.type === 'Sink' ? 'Sink' : 'Through'
@@ -604,7 +608,7 @@ function (createRead) {
 }
 
 var Sink =
-exports.Sink =
+exports.Sink = 
 function Sink(createReader) {
   return function () {
     var args = [].slice.call(arguments)
@@ -620,8 +624,8 @@ function Sink(createReader) {
 }
 
 
-exports.maybeSink =
-exports.maybeDrain =
+exports.maybeSink = 
+exports.maybeDrain = 
 function (createSink, cb) {
   if(!cb)
     return Through(function (read) {
@@ -747,7 +751,7 @@ var defer = exports.defer = function () {
     if(!_read) {
       _end = end
       cbs.push(cb)
-    }
+    } 
     else _read(end, cb)
   }
   read.resolve = function (read) {
