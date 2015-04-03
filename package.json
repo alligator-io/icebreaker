@@ -1,6 +1,6 @@
 {
   "name": "icebreaker",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "pull-stream based library",
   "main": "index.js",
   "scripts": {
