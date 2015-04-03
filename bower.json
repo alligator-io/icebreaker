@@ -16,6 +16,8 @@
   "license": "MIT",
   "ignore": [
     "**/.*",
+    "*.js",
+    "package.json",
     "node_modules",
     "bower_components",
     "scripts",
