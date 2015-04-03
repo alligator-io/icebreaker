@@ -6,7 +6,51 @@ icebreaker
 
 [![Travis](https://img.shields.io/travis/alligator-io/icebreaker.svg)](https://travis-ci.org/alligator-io/icebreaker)
 [![NPM](https://img.shields.io/npm/dm/icebreaker.svg)](https://www.npmjs.com/package/icebreaker)
+## NPM
+```bash
+npm install --save icebreaker
+```
+## Bower
+```bash
+bower install icebreaker --save
+```
+## Usage
+### In Node.js
+```javascript
+var _ = require('icebreaker')
+_(
+  [1,2,3,4,5,'hello','world'],
+  _.drain(function(i){
+      console.log(i)
+    },
+    function(err){
+      console.log('done')
+    })
+  )
+```
 
+### In the Browser
+```html
+<html>
+<head>
+  <script src="bower_components/dist/icebreaker.js"></script>
+</head>
+<body>
+  <script>
+    var _ = icebreaker
+    _(
+      [1,2,3,4,5,'hello','world'],
+      _.drain(function(i){
+        console.log(i)
+      },
+      function(err){
+        console.log('done')
+      })
+    )
+  </script>
+  </body>
+</html>
+```
 ## Examples
 
 ```javascript
@@ -29,94 +73,7 @@ _(_.chain([ 1, 2, 3 ])
 }))
 
 ```
-### Mixin
-### pull-cat
-```javascript
-_.mixin({
-  cat : require('pull-cat')
-})
-
-// no chaining
-_(
-  _.cat([
-    _.values([1,2,3,4]),
-    _.values([1,2,3,4])
-  ]),
-  _.collect(function(err,data){
-    console.log(data)
-  })
-)
-
-// chaining
-_(
-  _.chain()
-  .cat([
-    _.values([1,2,3,4]),
-    _.values([1,2,3,4])
-  ])
-  .collect(function(err,data){
-    console.log(data)
-  })
-)
-```
-
-#### FS Read/Write stream
-```javascript
-var fs = require('fs')
-
-_.mixin({
-  fs : {
-    read:function(path){
-      return _.source(fs.createReadStream(path) )
-    },
-    write : function(path,callback){
-      return _.sink( fs.createWriteStream(path),callback)
-    }
-  }
-})
-
-// write file
-
-// no chaining
-_(
-  ['_test1','_test2','_test3'],
-  _.fs.write('./test1.txt',
-    function(err){
-     console.log(err)
-    }
-  )
-)
-
-// chaining
-_(
-  _.chain(['test1','test2','test3'])
-  .fs().write('./test2.txt',
-    function(err){
-     console.log(err)
-    }
-  )
-)
-
-// read file
-
-// no chaining
-_(
-  _.fs.read('./test1.txt'),
-  _.collect(function(err,data){
-    console.log(err,data.toString())
-  })
-)
-
-// chaining
-_(
-  _.chain()
-  .fs()
-  .read('./test2.txt')
-  .collect(function(err,data){
-    console.log(err,data.toString())
-  })
-)
-```
+For more examples, check the test/ folder.
 
 
 ## License
