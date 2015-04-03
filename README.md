@@ -8,11 +8,11 @@ icebreaker
 [![NPM](https://img.shields.io/npm/dm/icebreaker.svg)](https://www.npmjs.com/package/icebreaker)
 ## NPM
 ```bash
-npm install --save icebreaker-js
+npm install --save icebreaker
 ```
 ## Bower
 ```bash
-bower install icebreaker.js --save
+bower install icebreaker-js --save
 ```
 ## Usage
 ### In Node.js
