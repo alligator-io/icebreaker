@@ -2,6 +2,8 @@ icebreaker
 ============
 [pull-stream](https://github.com/dominictarr/pull-stream) based library for Node.js.
 
+[![Sauce Test Status](https://saucelabs.com/browser-matrix/alligator-io.svg)](https://saucelabs.com/u/alligator-io)
+
 [![Travis](https://img.shields.io/travis/alligator-io/icebreaker.svg)](https://travis-ci.org/alligator-io/icebreaker)
 [![NPM](https://img.shields.io/npm/dm/icebreaker.svg)](https://www.npmjs.com/package/icebreaker)
 
