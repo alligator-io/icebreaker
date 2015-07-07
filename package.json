@@ -27,13 +27,13 @@
     "isarray": "0.0.1",
     "pull-fork": "^2.1.0",
     "pull-pair": "^1.0.0",
-    "pull-stream": "^2.26.0",
+    "pull-stream": "^2.27.0",
     "stream-to-pull-stream": "^1.6.1"
   },
   "devDependencies": {
-    "browserify": "9.0.3",
-    "tape": "3.5.0",
-    "uglifyjs": "2.4.10",
-    "zuul": "2.1.1"
+    "browserify": "10.2.4",
+    "tape": "4.0.0",
+    "uglify-js": "2.4.23",
+    "zuul": "3.2.0"
   }
 }
