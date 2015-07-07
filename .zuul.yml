@@ -7,10 +7,10 @@ browsers:
     version: [4.4,5.0]
     platform: Linux
   - name: firefox
-    version: [35,36]
+    version: [37,38]
     platform: Windows 2012 R2
   - name: chrome
-    version: [40,41]
+    version: [42,43]
     platform: Windows 2012 R2
   - name: ie
     version: 9..11
