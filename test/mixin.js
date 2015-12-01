@@ -6,14 +6,14 @@ test('mixin 1', function(t) {
 
  _.mixin({
    test1:
-     _.source(function(s){
+     function(s){
        var i = 0
        return function(end,callback){
          if(end) return callback(end)
          if(i++ >3 ) return callback(true)
          callback(null,s +i  )
        }
-     })
+     }
   })
 
   _(
@@ -42,14 +42,14 @@ test('mixin 2', function(t) {
 
  _.mixin({
    test2:{
-     deep:_.source(function(s){
+     deep:function(s){
        var i = 0
        return function(end,callback){
          if(end) return callback(end)
          if(i-- <-3 ) return callback(true)
          callback(null,s +i  )
        }
-     })
+     }
    }
  })
 

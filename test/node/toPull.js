@@ -18,7 +18,7 @@ function count(n) {
 test('fs.createReadStream to source', function (t) {
   var f = createReadStream()
   _(
-    _.source(f),
+    _.toPull(f),
     _.drain(function (item) {
         t.equal(typeof item, 'object');
     },
@@ -32,7 +32,7 @@ test('fs.createReadStream to source', function (t) {
 test('fs.createReadStream to source with an error', function (t) {
   var f = createReadStream()
   _(
-    _.source(f), _.asyncMap(function (i, cb) {
+    _.toPull(f), _.asyncMap(function (i, cb) {
       t.equal(typeof i, 'object')
       cb('test')
     }),
@@ -49,7 +49,7 @@ test('fs.createWriteStream to sink', function (t) {
   var f = createWriteStream()
   _(
     count(10),
-    _.sink(f, function (end) {
+    _.toPull(f, function (end) {
       t.notOk(end)
     })
   )
@@ -63,34 +63,18 @@ test('fs.createWriteStream to sink with an error', function (t) {
     _.asyncMap(function (i, cb) {
       cb('error')
     }),
-    _.sink(f, function (end) {
+    _.toPull(f, function (end) {
       t.equal(end, 'error', 'error')
     })
   )
 })
 
 if(stream.PassThrough){
-  test('stream.PassThrough to pair', function (t) {
-    t.plan(12)
-    _(
-      count(10),
-      _.pair(stream.PassThrough({
-        objectMode: true
-      })),
-      _.drain(function (data) {
-        t.equal(typeof data ,'string')
-      },
-      function (err) {
-        t.notOk(err)
-      })
-    )
-  })
-
   test('stream.PassThrough to through', function (t) {
     t.plan(12)
     _(
       count(10),
-      _.through(stream.PassThrough({
+      _.toPull(stream.PassThrough({
         objectMode: true
       })),
       _.drain(function (data) {
