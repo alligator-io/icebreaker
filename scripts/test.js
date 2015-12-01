@@ -10,5 +10,4 @@ var run = function(command){
 if(process.env.ENABLE_ZUUL==='true'){
   return run('test-zuul')
 }
-
-run('test-local')
+return run('test-local')
