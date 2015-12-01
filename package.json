@@ -6,11 +6,11 @@
   "scripts": {
     "build": "npm run browserify && npm run dist",
     "test": "node scripts/test",
-    "test-local": "node node_modules/.bin/tape test/*.js test/node/*.js",
-    "test-browser": "node_modules/.bin/zuul --open --local 8087 -- test/*.js",
-    "test-zuul": "node_modules/.bin/zuul -- test/*.js",
-    "browserify": "node_modules/.bin/browserify lib/icebreaker.js -o dist/icebreaker.js -s icebreaker",
-    "dist": "node_modules/.bin/uglifyjs dist/icebreaker.js -o dist/icebreaker.min.js"
+    "test-local": "tape test/*.js test/node/*.js",
+    "test-browser": "zuul --open --local 8087 -- test/*.js",
+    "test-zuul": "zuul -- test/*.js",
+    "browserify": "browserify lib/icebreaker.js -o dist/icebreaker.js -s icebreaker",
+    "dist": "uglifyjs dist/icebreaker.js -o dist/icebreaker.min.js"
   },
   "repository": {
     "type": "git",
@@ -27,13 +27,13 @@
     "isarray": "0.0.1",
     "pull-fork": "^2.1.0",
     "pull-pair": "^1.0.0",
-    "pull-stream": "^2.27.0",
-    "stream-to-pull-stream": "^1.6.1"
+    "pull-stream": "^3.0.1",
+    "stream-to-pull-stream": "^1.6.6"
   },
   "devDependencies": {
-    "browserify": "10.2.4",
-    "tape": "4.0.0",
-    "uglify-js": "2.4.23",
-    "zuul": "3.2.0"
+    "browserify": "^12.0.1",
+    "tape": "^4.2.2",
+    "uglify-js": "^2.6.1",
+    "zuul": "^3.7.3"
   }
 }
