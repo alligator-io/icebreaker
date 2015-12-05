@@ -6,6 +6,7 @@ icebreaker
 
 [![Travis](https://img.shields.io/travis/alligator-io/icebreaker.svg)](https://travis-ci.org/alligator-io/icebreaker)
 [![NPM](https://img.shields.io/npm/dm/icebreaker.svg)](https://www.npmjs.com/package/icebreaker)
+[![AppVeyor](https://img.shields.io/appveyor/ci/alligator-io/icebreaker.svg)](https://ci.appveyor.com/project/alligator-io/icebreaker)
 ## NPM
 ```bash
 npm install --save icebreaker
