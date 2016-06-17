@@ -21,7 +21,7 @@ browsers:
   - name: safari
     version: 7..latest
   - name: ipad
-    version: [7.1,8.1,latest]
+    version: [7.1,8.1,9.2]
   - name: opera
     version: latest
     platform: Windows 2003
