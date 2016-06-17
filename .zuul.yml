@@ -15,10 +15,13 @@ browsers:
   - name: ie
     version: 9..11
     platform: Windows 2008
+  - name: MicrosoftEdge
+    platform: Windows 10
+    version: latest
   - name: safari
     version: 7..latest
   - name: ipad
-    version: [6.1,7.1,8.1..latest]
+    version: [7.1,8.1..latest]
   - name: opera
     version: latest
     platform: Windows 2003
