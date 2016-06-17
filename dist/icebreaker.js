@@ -111,7 +111,6 @@ icebreaker.prototype.pull = function () {
 mixin(pull)
 
 mixin({
-  fork: require('pull-fork'),
   pair: require('pull-pair'),
   chain: function () {
     if (!(this instanceof icebreaker)) {
@@ -155,7 +154,7 @@ mixin({
 
 module.exports = icebreaker
 
-},{"inherits":2,"isarray":3,"pull-fork":4,"pull-pair":5,"pull-stream":6}],2:[function(require,module,exports){
+},{"inherits":2,"isarray":3,"pull-pair":4,"pull-stream":5}],2:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -186,127 +185,17 @@ module.exports = Array.isArray || function (arr) {
 };
 
 },{}],4:[function(require,module,exports){
- 'use strict';
+'use strict'
 
-//split one stream into two.
-//if the stream ends, end both streams.
-//if a reader stream aborts,
-//continue to write to the other stream.
-
-module.exports = function (sinks, select, create) {
-  if('function' === typeof sinks) {
-    create = select
-    select = sinks
-    sinks = []
-  }
-
-  var running = 0
-  var cbs     = new Array(sinks.length)
-  var aborted = new Array(sinks.length)
-  var open = false, ended, j, data, read, reading
-
-  function init (key, reader) {
-    running ++
-    reader(function (abort, cb) {
-      if(abort) {
-        aborted[key] = abort;
-        --running
-        //cbs[key] = cb
-        //if all sinks have aborted, abort the sink.
-        if(j === key) j = null
-
-        pull(running ? null : abort)
-        if(cb) cb(abort)
-        //continue, incase we have already read something
-        //for this stream. might need to drop that.
-        return
-      }
-
-      if(j === key) {
-        var _j = j; j = null
-        if(aborted[key]) return
-        cb(null, data)
-      }
-      else if(ended) {
-        return cb(ended)
-      }
-      else {
-        cbs[key] = cb
-      }
-      pull()
-    })
-  }
-
-  for(var k in sinks)
-    init(k, sinks[k])
-
-  function endAll () {
-    for(var k in cbs) {
-      if(cbs[k]) {
-        var cb = cbs[k]
-        cbs[k] = null
-        cb (ended)
-      }
-    }
-  }
-
-  function pull (abort) {
-    if(reading || !read || j != null) return
-    reading = true
-    read(abort, function (end, _data) {
-      reading = false
-      var _j
-      if(end) {
-        ended = end
-        return endAll()
-      }
-      else
-        _j = select(_data, sinks)
-
-      if(aborted[_j])
-        return pull()
-
-      if(!sinks[_j]) {
-        //edgecase: if select returns a new stream
-        //          but user did not provide create?
-        sinks[_j] = create(_j, sinks)
-        //init will pass the sink read,
-        //which will then grab data.
-        //so we don't need to be in this callback anymore.
-        j = _j
-        data = _data
-        return init(_j, sinks[_j])
-      }
-
-      if(cbs[_j]) {
-        var cb = cbs[_j]
-        cbs[_j] = null
-        cb(null, _data)
-      } else {
-        j = _j; data = _data
-      }
-    })
-  }
-
-  function reader (_read) {
-    read = _read; pull()
-  }
-
-  reader.add = function (key, sink) {
-    sinks[key] = sink
-    init(key, sink)
-  }
-
-  return reader
-}
-
-},{}],5:[function(require,module,exports){
 //a pair of pull streams where one drains from the other
 module.exports = function () {
   var _read, waiting
   function sink (read) {
     if('function' !== typeof read)
       throw new Error('read must be function')
+
+    if(_read)
+      throw new Error('already piped')
     _read = read
     if(waiting) {
       var _waiting = waiting
@@ -327,7 +216,9 @@ module.exports = function () {
 }
 
 
-},{}],6:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
+'use strict'
+
 var sources  = require('./sources')
 var sinks    = require('./sinks')
 var throughs = require('./throughs')
@@ -344,123 +235,126 @@ for(var k in sinks)
   exports[k] = sinks[k]
 
 
-},{"./pull":7,"./sinks":8,"./sources":9,"./throughs":10}],7:[function(require,module,exports){
-function isFunction (fun) {
-  return 'function' === typeof fun
-}
+},{"./pull":6,"./sinks":11,"./sources":18,"./throughs":27}],6:[function(require,module,exports){
+'use strict'
 
-//check if this stream is either a sink or a through.
-function isReader (fun) {
-  return isFunction(fun) && (fun.length === 1)
-}
-
-module.exports = function pull () {
-  var args = [].slice.call(arguments)
-
-  if(isReader(args[0]))
+module.exports = function pull (a) {
+  var length = arguments.length
+  if (typeof a === 'function' && a.length === 1) {
+    var args = new Array(length)
+    for(var i = 0; i < length; i++)
+      args[i] = arguments[i]
     return function (read) {
       args.unshift(read)
       return pull.apply(null, args)
     }
-
-  var read = args.shift()
-
-  //if the first function is a duplex stream,
-  //pipe from the source.
-  if(read && isFunction(read.source))
-    read = read.source
-
-  function next () {
-    var s = args.shift()
-
-    if(null == s)
-      return next()
-
-    if(isFunction(s)) return s
-
-    return function (read) {
-      s.sink(read)
-      //this supports pipeing through a duplex stream
-      //pull(a, b, a) "telephone style".
-      //if this stream is in the a (first & last position)
-      //s.source will have already been used, but this should never be called
-      //so that is okay.
-      return s.source
-    }
   }
 
-  while(args.length)
-    read = next() (read)
+  var read = a
+
+  if (read && typeof read.source === 'function') {
+    read = read.source
+  }
+
+  for (var i = 1; i < length; i++) {
+    var s = arguments[i]
+    if (typeof s === 'function') {
+      read = s(read)
+    } else if (s && typeof s === 'object') {
+      s.sink(read)
+      read = s.source
+    }
+  }
 
   return read
 }
 
 
-},{}],8:[function(require,module,exports){
+
+
+
+
+},{}],7:[function(require,module,exports){
 'use strict'
 
-function id (item) { return item }
+var reduce = require('./reduce')
 
-function prop (key) {
-  return (
-    'string' == typeof key
-    ? function (data) { return data[key] }
-    : key && 'object' === typeof key && 'function' === typeof key.exec //regexp
-    ? function (data) { var v = map.exec(data); return v && v[0] }
-    : key || id
-  )
+module.exports = function collect (cb) {
+  return reduce(function (arr, item) {
+    arr.push(item)
+    return arr
+  }, [], cb)
 }
 
+},{"./reduce":14}],8:[function(require,module,exports){
+'use strict'
 
-var drain = exports.drain = function (op, done) {
+var reduce = require('./reduce')
 
-  return function (read) {
+module.exports = function concat (cb) {
+  return reduce(function (a, b) {
+    return a + b
+  }, '', cb)
+}
 
+},{"./reduce":14}],9:[function(require,module,exports){
+'use strict'
+
+module.exports = function drain (op, done) {
+  var read, abort
+
+  function sink (_read) {
+    read = _read
+    if(abort) return sink.abort()
     //this function is much simpler to write if you
     //just use recursion, but by using a while loop
     //we do not blow the stack if the stream happens to be sync.
     ;(function next() {
-      var loop = true, cbed = false
-      while(loop) {
-        cbed = false
-        read(null, function (end, data) {
-          cbed = true
-          if(end) {
+        var loop = true, cbed = false
+        while(loop) {
+          cbed = false
+          read(null, function (end, data) {
+            cbed = true
+            if(end = end || abort) {
+              loop = false
+              if(done) done(end === true ? null : end)
+              else if(end && end !== true)
+                throw end
+            }
+            else if(op && false === op(data) || abort) {
+              loop = false
+              read(abort || true, done || function () {})
+            }
+            else if(!loop){
+              next()
+            }
+          })
+          if(!cbed) {
             loop = false
-            if(done) done(end === true ? null : end)
-            else if(end && end !== true)
-              throw end
+            return
           }
-          else if(op && false === op(data)) {
-            loop = false
-            read(true, done || function () {})
-          }
-          else if(!loop){
-            next()
-          }
-        })
-        if(!cbed) {
-          loop = false
-          return
         }
-      }
-    })()
-
+      })()
   }
+
+  sink.abort = function (err, cb) {
+    if('function' == typeof err)
+      cb = err, err = true
+    abort = err || true
+    if(read) return read(abort, cb || function () {})
+  }
+
+  return sink
 }
 
-var onEnd = exports.onEnd = function (done) {
-  return drain(null, done)
-}
+},{}],10:[function(require,module,exports){
+'use strict'
 
-var log = exports.log = function (done) {
-  return drain(function (data) {
-    console.log(data)
-  }, done)
-}
+function id (e) { return e }
+var prop = require('../util/prop')
+var drain = require('./drain')
 
-var find =
-exports.find = function (test, cb) {
+module.exports = function find (test, cb) {
   var ended = false
   if(!cb)
     cb = test, test = id
@@ -479,47 +373,130 @@ exports.find = function (test, cb) {
   })
 }
 
-var reduce = exports.reduce = function (reduce, acc, cb) {
 
+
+
+
+},{"../util/prop":34,"./drain":9}],11:[function(require,module,exports){
+'use strict'
+
+module.exports = {
+  drain: require('./drain'),
+  onEnd: require('./on-end'),
+  log: require('./log'),
+  find: require('./find'),
+  reduce: require('./reduce'),
+  collect: require('./collect'),
+  concat: require('./concat')
+}
+
+
+},{"./collect":7,"./concat":8,"./drain":9,"./find":10,"./log":12,"./on-end":13,"./reduce":14}],12:[function(require,module,exports){
+'use strict'
+
+var drain = require('./drain')
+
+module.exports = function log (done) {
   return drain(function (data) {
-    acc = reduce(acc, data)
+    console.log(data)
+  }, done)
+}
+
+},{"./drain":9}],13:[function(require,module,exports){
+'use strict'
+
+var drain = require('./drain')
+
+module.exports = function onEnd (done) {
+  return drain(null, done)
+}
+
+},{"./drain":9}],14:[function(require,module,exports){
+'use strict'
+
+var drain = require('./drain')
+
+module.exports = function reduce (reducer, acc, cb) {
+  return drain(function (data) {
+    acc = reducer(acc, data)
   }, function (err) {
     cb(err, acc)
   })
-
-}
-
-var collect = exports.collect =
-function (cb) {
-  return reduce(function (arr, item) {
-    arr.push(item)
-    return arr
-  }, [], cb)
-}
-
-var concat = exports.concat =
-function (cb) {
-  return reduce(function (a, b) {
-    return a + b
-  }, '', cb)
 }
 
 
-},{}],9:[function(require,module,exports){
+},{"./drain":9}],15:[function(require,module,exports){
+'use strict'
 
-var keys = exports.keys =
-function (object) {
+module.exports = function count (max) {
+  var i = 0; max = max || Infinity
+  return function (end, cb) {
+    if(end) return cb && cb(end)
+    if(i > max)
+      return cb(true)
+    cb(null, i++)
+  }
+}
+
+
+
+},{}],16:[function(require,module,exports){
+'use strict'
+//a stream that ends immediately.
+module.exports = function empty () {
+  return function (abort, cb) {
+    cb(true)
+  }
+}
+
+},{}],17:[function(require,module,exports){
+'use strict'
+//a stream that errors immediately.
+module.exports = function error (err) {
+  return function (abort, cb) {
+    cb(err)
+  }
+}
+
+
+},{}],18:[function(require,module,exports){
+'use strict'
+module.exports = {
+  keys: require('./keys'),
+  once: require('./once'),
+  values: require('./values'),
+  count: require('./count'),
+  infinite: require('./infinite'),
+  empty: require('./empty'),
+  error: require('./error')
+}
+
+},{"./count":15,"./empty":16,"./error":17,"./infinite":19,"./keys":20,"./once":21,"./values":22}],19:[function(require,module,exports){
+'use strict'
+module.exports = function infinite (generate) {
+  generate = generate || Math.random
+  return function (end, cb) {
+    if(end) return cb && cb(end)
+    return cb(null, generate())
+  }
+}
+
+
+
+},{}],20:[function(require,module,exports){
+'use strict'
+var values = require('./values')
+module.exports = function (object) {
   return values(Object.keys(object))
 }
 
-function abortCb(cb, abort, onAbort) {
-  cb(abort)
-  onAbort && onAbort(abort === true ? null: abort)
-  return
-}
 
-var once = exports.once =
-function (value, onAbort) {
+
+},{"./values":22}],21:[function(require,module,exports){
+'use strict'
+var abortCb = require('../util/abort-cb')
+
+module.exports = function once (value, onAbort) {
   return function (abort, cb) {
     if(abort)
       return abortCb(cb, abort, onAbort)
@@ -531,8 +508,13 @@ function (value, onAbort) {
   }
 }
 
-var values = exports.values = exports.readArray =
-function (array, onAbort) {
+
+
+},{"../util/abort-cb":33}],22:[function(require,module,exports){
+'use strict'
+var abortCb = require('../util/abort-cb')
+
+module.exports = function values (array, onAbort) {
   if(!array)
     return function (abort, cb) {
       if(abort) return abortCb(cb, abort, onAbort)
@@ -551,103 +533,68 @@ function (array, onAbort) {
 }
 
 
-var count = exports.count =
-function (max) {
-  var i = 0; max = max || Infinity
-  return function (end, cb) {
-    if(end) return cb && cb(end)
-    if(i > max)
-      return cb(true)
-    cb(null, i++)
-  }
-}
+},{"../util/abort-cb":33}],23:[function(require,module,exports){
+'use strict'
 
-var infinite = exports.infinite =
-function (generate) {
-  generate = generate || Math.random
-  return function (end, cb) {
-    if(end) return cb && cb(end)
-    return cb(null, generate())
-  }
-}
+function id (e) { return e }
+var prop = require('../util/prop')
 
-//a stream that ends immediately.
-var empty = exports.empty = function () {
-  return function (abort, cb) {
-    cb(true)
-  }
-}
-
-//a stream that errors immediately.
-var error = exports.error = function (err) {
-  return function (abort, cb) {
-    cb(err)
-  }
-}
-
-
-},{}],10:[function(require,module,exports){
-'use strict';
-
-function id (item) { return item }
-
-function prop (key) {
-  return (
-    'string' == typeof key
-    ? function (data) { return data[key] }
-    : 'object' === typeof key && 'function' === typeof key.exec //regexp
-    ? function (data) { var v = map.exec(data); return v && v[0] }
-    : key
-  )
-}
-
-function tester (test) {
-  return (
-    'object' === typeof test && 'function' === typeof test.test //regexp
-    ? function (data) { return test.test(data) }
-    : prop (test) || id
-  )
-}
-
-var sources = require('./sources')
-var sinks = require('./sinks')
-
-var map = exports.map =
-function (map) {
+module.exports = function asyncMap (map) {
   if(!map) return id
   map = prop(map)
+  var busy = false, abortCb, aborted
   return function (read) {
-    return function (abort, cb) {
-      read(abort, function (end, data) {
-        try {
-        data = !end ? map(data) : null
-        } catch (err) {
-          return read(err, function () {
-            return cb(err)
-          })
-        }
-        cb(end, data)
-      })
+    return function next (abort, cb) {
+      if(aborted) return cb(aborted)
+      if(abort) {
+        aborted = abort
+        if(!busy) read(abort, cb)
+        else read(abort, function () {
+          //if we are still busy, wait for the mapper to complete.
+          if(busy) abortCb = cb
+          else cb(abort)
+        })
+      }
+      else
+        read(null, function (end, data) {
+          if(end) cb(end)
+          else if(aborted) cb(aborted)
+          else {
+            busy = true
+            map(data, function (err, data) {
+              busy = false
+              if(aborted) {
+                cb(aborted)
+                abortCb(aborted)
+              }
+              else if(err) next (err, cb)
+              else cb(null, data)
+            })
+          }
+        })
     }
   }
 }
 
-var asyncMap = exports.asyncMap =
-function (map) {
-  if(!map) return id //when read is passed, pass it on.
-  return function (read) {
-    return function (end, cb) {
-      if(end) return read(end, cb) //abort
-      read(null, function (end, data) {
-        if(end) return cb(end, data)
-        map(data, cb)
-      })
-    }
-  }
+
+
+},{"../util/prop":34}],24:[function(require,module,exports){
+'use strict'
+
+var tester = require('../util/tester')
+var filter = require('./filter')
+
+module.exports = function filterNot (test) {
+  test = tester(test)
+  return filter(function (data) { return !test(data) })
 }
 
-var filter = exports.filter =
-function (test) {
+},{"../util/tester":35,"./filter":25}],25:[function(require,module,exports){
+'use strict'
+
+var tester = require('../util/tester')
+
+module.exports = function filter (test) {
   //regexp
   test = tester(test)
   return function (read) {
@@ -667,38 +614,114 @@ function (test) {
   }
 }
 
-var filterNot = exports.filterNot =
-function (test) {
-  test = tester(test)
-  return filter(function (data) { return !test(data) })
+
+},{"../util/tester":35}],26:[function(require,module,exports){
+'use strict'
+
+var values = require('../sources/values')
+var once = require('../sources/once')
+
+//convert a stream of arrays or streams into just a stream.
+module.exports = function flatten () {
+  return function (read) {
+    var _read
+    return function (abort, cb) {
+      if (abort) { //abort the current stream, and then stream of streams.
+        _read ? _read(abort, function(err) {
+          read(err || abort, cb)
+        }) : read(abort, cb)
+      }
+      else if(_read) nextChunk()
+      else nextStream()
+
+      function nextChunk () {
+        _read(null, function (err, data) {
+          if (err === true) nextStream()
+          else if (err) {
+            read(true, function(abortErr) {
+              // TODO: what do we do with the abortErr?
+              cb(err)
+            })
+          }
+          else cb(null, data)
+        })
+      }
+      function nextStream () {
+        _read = null
+        read(null, function (end, stream) {
+          if(end)
+            return cb(end)
+          if(Array.isArray(stream) || stream && 'object' === typeof stream)
+            stream = values(stream)
+          else if('function' != typeof stream)
+            stream = once(stream)
+          _read = stream
+          nextChunk()
+        })
+      }
+    }
+  }
 }
 
-//a pass through stream that doesn't change the value.
-var through = exports.through =
-function (op, onEnd) {
-  var a = false
 
-  function once (abort) {
-    if(a || !onEnd) return
-    a = true
-    onEnd(abort === true ? null : abort)
-  }
+},{"../sources/once":21,"../sources/values":22}],27:[function(require,module,exports){
+'use strict'
 
+module.exports = {
+  map: require('./map'),
+  asyncMap: require('./async-map'),
+  filter: require('./filter'),
+  filterNot: require('./filter-not'),
+  through: require('./through'),
+  take: require('./take'),
+  unique: require('./unique'),
+  nonUnique: require('./non-unique'),
+  flatten: require('./flatten')
+}
+
+
+
+
+},{"./async-map":23,"./filter":25,"./filter-not":24,"./flatten":26,"./map":28,"./non-unique":29,"./take":30,"./through":31,"./unique":32}],28:[function(require,module,exports){
+'use strict'
+
+function id (e) { return e }
+var prop = require('../util/prop')
+
+module.exports = function map (mapper) {
+  if(!mapper) return id
+  mapper = prop(mapper)
   return function (read) {
-    return function (end, cb) {
-      if(end) once(end)
-      return read(end, function (end, data) {
-        if(!end) op && op(data)
-        else once(end)
+    return function (abort, cb) {
+      read(abort, function (end, data) {
+        try {
+        data = !end ? mapper(data) : null
+        } catch (err) {
+          return read(err, function () {
+            return cb(err)
+          })
+        }
         cb(end, data)
       })
     }
   }
 }
 
+},{"../util/prop":34}],29:[function(require,module,exports){
+'use strict'
+
+var unique = require('./unique')
+
+//passes an item through when you see it for the second time.
+module.exports = function nonUnique (field) {
+  return unique(field, true)
+}
+
+},{"./unique":32}],30:[function(require,module,exports){
+'use strict'
+
 //read a number of items and then stop.
-var take = exports.take =
-function (test, opts) {
+module.exports = function take (test, opts) {
   opts = opts || {}
   var last = opts.last || false // whether the first item for which !test(item) should still pass
   var ended = false
@@ -737,8 +760,40 @@ function (test, opts) {
   }
 }
 
+},{}],31:[function(require,module,exports){
+'use strict'
+
+//a pass through stream that doesn't change the value.
+module.exports = function through (op, onEnd) {
+  var a = false
+
+  function once (abort) {
+    if(a || !onEnd) return
+    a = true
+    onEnd(abort === true ? null : abort)
+  }
+
+  return function (read) {
+    return function (end, cb) {
+      if(end) once(end)
+      return read(end, function (end, data) {
+        if(!end) op && op(data)
+        else once(end)
+        cb(end, data)
+      })
+    }
+  }
+}
+
+},{}],32:[function(require,module,exports){
+'use strict'
+
+function id (e) { return e }
+var prop = require('../util/prop')
+var filter = require('./filter')
+
 //drop items you have already seen.
-var unique = exports.unique = function (field, invert) {
+module.exports = function unique (field, invert) {
   field = prop(field) || id
   var seen = {}
   return filter(function (data) {
@@ -749,53 +804,38 @@ var unique = exports.unique = function (field, invert) {
   })
 }
 
-//passes an item through when you see it for the second time.
-var nonUnique = exports.nonUnique = function (field) {
-  return unique(field, true)
-}
 
-//convert a stream of arrays or streams into just a stream.
-var flatten = exports.flatten = function () {
-  return function (read) {
-    var _read
-    return function (abort, cb) {
-      if (abort) { //abort the current stream, and then stream of streams.
-        _read ? _read(abort, function(err) {
-          read(err || abort, cb)
-        }) : read(abort, cb)
-      }
-      else if(_read) nextChunk()
-      else nextStream()
-
-      function nextChunk () {
-        _read(null, function (err, data) {
-          if (err === true) nextStream()
-          else if (err) {
-            read(true, function(abortErr) {
-              // TODO: what do we do with the abortErr?
-              cb(err)
-            })
-          }
-          else cb(null, data)
-        })
-      }
-      function nextStream () {
-        _read = null
-        read(null, function (end, stream) {
-          if(end)
-            return cb(end)
-          if(Array.isArray(stream) || stream && 'object' === typeof stream)
-            stream = sources.values(stream)
-          else if('function' != typeof stream)
-            throw new Error('expected stream of streams')
-          _read = stream
-          nextChunk()
-        })
-      }
-    }
-  }
+},{"../util/prop":34,"./filter":25}],33:[function(require,module,exports){
+module.exports = function abortCb(cb, abort, onAbort) {
+  cb(abort)
+  onAbort && onAbort(abort === true ? null: abort)
+  return
 }
 
 
-},{"./sinks":8,"./sources":9}]},{},[1])(1)
+},{}],34:[function(require,module,exports){
+module.exports = function prop (key) {
+  return key && (
+    'string' == typeof key
+    ? function (data) { return data[key] }
+    : 'object' === typeof key && 'function' === typeof key.exec //regexp
+    ? function (data) { var v = key.exec(data); return v && v[0] }
+    : key
+  )
+}
+
+},{}],35:[function(require,module,exports){
+var prop = require('./prop')
+
+function id (e) { return e }
+
+module.exports = function tester (test) {
+  return (
+    'object' === typeof test && 'function' === typeof test.test //regexp
+    ? function (data) { return test.test(data) }
+    : prop (test) || id
+  )
+}
+
+},{"./prop":34}]},{},[1])(1)
 });
