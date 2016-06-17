@@ -26,14 +26,14 @@
     "inherits": "^2.0.1",
     "isarray": "0.0.1",
     "pull-fork": "^2.1.0",
-    "pull-pair": "^1.0.0",
-    "pull-stream": "^3.0.1",
-    "stream-to-pull-stream": "^1.6.6"
+    "pull-pair": "^1.1.0",
+    "pull-stream": "^3.4.2",
+    "stream-to-pull-stream": "^1.6.9"
   },
   "devDependencies": {
-    "browserify": "^12.0.1",
-    "tape": "^4.2.2",
-    "uglify-js": "^2.6.1",
-    "zuul": "^3.7.3"
+    "zuul": "^3.10.1",
+    "browserify": "^13.0.1",
+    "tape": "^4.5.1",
+    "uglify-js": "^2.6.2"
   }
 }
