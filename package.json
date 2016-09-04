@@ -1,6 +1,6 @@
 {
   "name": "icebreaker",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "pull-stream based library",
   "main": "index.js",
   "scripts": {
@@ -24,15 +24,15 @@
   "license": "MIT",
   "dependencies": {
     "inherits": "^2.0.1",
-    "isarray": "0.0.1",
+    "isarray": "^1.0.0",
     "pull-pair": "^1.1.0",
-    "pull-stream": "^3.4.2",
-    "stream-to-pull-stream": "^1.6.9"
+    "pull-stream": "^3.4.4",
+    "stream-to-pull-stream": "^1.7.0"
   },
   "devDependencies": {
-    "zuul": "^3.10.1",
-    "browserify": "^13.0.1",
-    "tape": "^4.5.1",
-    "uglify-js": "^2.6.2"
+    "zuul": "^3.11.0",
+    "browserify": "^13.1.0",
+    "tape": "^4.6.0",
+    "uglify-js": "^2.7.3"
   }
 }
