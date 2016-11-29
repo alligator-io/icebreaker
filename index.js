@@ -1,4 +1,13 @@
-var _ = require('./lib/icebreaker')
-require('./lib/toPull')
+ 'use strict'
+ module.exports = require('./pull');
 
-module.exports = _
+;[
+    require('pull-stream/sources'),
+    require('pull-stream/throughs'),
+    require('pull-stream/sinks'),
+    require('./util'),
+    require('./sources')
+    
+].forEach(function(streams){
+    for(var k in streams) module.exports[k] = streams[k]
+})

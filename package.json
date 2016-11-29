@@ -1,6 +1,6 @@
 {
   "name": "icebreaker",
-  "version": "1.0.3",
+  "version": "2.0.0",
   "description": "pull-stream based library",
   "main": "index.js",
   "scripts": {
@@ -9,7 +9,7 @@
     "test-local": "tape test/*.js test/node/*.js",
     "test-browser": "zuul --open --local 8087 -- test/*.js",
     "test-zuul": "zuul -- test/*.js",
-    "browserify": "browserify lib/icebreaker.js -o dist/icebreaker.js -s icebreaker",
+    "browserify": "browserify index.js -o dist/icebreaker.js -s icebreaker",
     "dist": "uglifyjs dist/icebreaker.js -o dist/icebreaker.min.js"
   },
   "repository": {
@@ -18,21 +18,24 @@
   },
   "keywords": [
     "pull-stream",
-    "streams"
+    "streams",
+    "icebreaker"
   ],
   "author": "Markus Wunderlin",
   "license": "MIT",
   "dependencies": {
-    "inherits": "^2.0.1",
-    "isarray": "^1.0.0",
+    "is-pull-stream": "0.0.0",
+    "pull-cat": "^1.1.11",
+    "pull-notify": "^0.1.1",
     "pull-pair": "^1.1.0",
-    "pull-stream": "^3.4.4",
-    "stream-to-pull-stream": "^1.7.0"
+    "pull-pushable": "^2.0.1",
+    "pull-stream": "^3.5.0",
+    "stream-to-pull-stream": "^1.7.2"
   },
   "devDependencies": {
-    "zuul": "^3.11.0",
-    "browserify": "^13.1.0",
-    "tape": "^4.6.0",
-    "uglify-js": "^2.7.3"
+    "zuul": "^3.11.1",
+    "browserify": "^13.1.1",
+    "tape": "^4.6.3",
+    "uglify-js": "^2.7.4"
   }
 }

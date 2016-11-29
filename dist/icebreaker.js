@@ -1,190 +1,322 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.icebreaker = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var pull = require('pull-stream')
-var inherits = require('inherits')
-var isArray = require('isarray')
+ 'use strict'
+ module.exports = require('./pull');
 
-function init() {
-  if (arguments.length > 0) {
-    for (var key in arguments) {
-      if (arguments.hasOwnProperty(key)) {
-        var arg = arguments[key]
-        if (isArray(arg) || typeof arg === 'string' ||
-          typeof arg === 'number') {
-          if (this._chain === false) this._commands.push(this.params(arg))
-          else this.params(arg)
-        } else this._commands.push(arg)
-      }
-    }
-
-    if (this._chain === false) {
-      return this.pull()
-    }
-  }
-}
-
-function icebreaker() {
-  if (!(this instanceof icebreaker)) {
-    var i = Object.create(icebreaker.prototype);
-    var p = icebreaker.apply(i, [].slice.call(arguments))
-    if (p) return p
-    return i
-  }
-
-  this._commands = []
-
-  /* jshint eqnull:true */
-  if (this._chain == null) this._chain = false
-
-  var p = init.apply(this, [].slice.call(arguments))
-  if (p) return p
-}
-
-icebreaker.prototype.add = function () {
-  this._commands = this._commands.concat([].slice.call(arguments))
-  return this
-}
-
-var mixin = icebreaker.mixin = function (obj, dest) {
-  if (!dest) dest = icebreaker
-
-  for (var key in obj) {
-    if (obj.hasOwnProperty(key)) {
-      var value = obj[key]
-
-      if (typeof value === 'function' && typeof key === 'string') {
-        (function (key, value) {
-          dest[key] = function () {
-            return value.apply(this, [].slice.call(arguments))
-          }
-          dest.prototype[key] = function () {
-            var r = dest[key].apply(this, [].slice.call(arguments))
-            return this._chain === true ? this.add(r) : r
-          }
-          if(value.type){
-            dest[key].type=value.type
-            dest.prototype[key].type = value.type
-          }
-        })(key, value)
-      } else if (typeof value === 'object' && key !== 'prototype') {
-        (function (key, value) {
-          dest[key] = value
-          var w = function () {
-            if (!(this instanceof w)) return new w()
-            icebreaker.call(this)
-          }
-
-          inherits(w, icebreaker)
-          if (Object.keys(value).length > 0)
-            icebreaker.mixin(value, w)
-          else {
-            dest[key] = w
-          }
-
-          dest.prototype[key] = function () {
-            var s = new w()
-            s._commands = this._commands
-            s._chain = this._chain
-            return s
-          }
-        })(key, value)
-      }
-    }
-  }
-}
-
-icebreaker.prototype.pull = function () {
-  if (isArray(this._commands))
-    for (var key in this._commands) {
-      if (this._commands[key] instanceof icebreaker) {
-        var r = this._commands[key].pull()
-        if (r) this._commands[key] = r
-      }
-    }
-
-  var p = pull.apply(pull, this._commands)
-
-  this._commands = []
-
-  return p
-}
-
-mixin(pull)
-
-mixin({
-  pair: require('pull-pair'),
-  chain: function () {
-    if (!(this instanceof icebreaker)) {
-      var i = Object.create(icebreaker.prototype);
-      i._chain = true
-      icebreaker.apply(i, [].slice.call(arguments));
-      return i
-    }
-
-    this._chain = true
-    init.apply(this, [].slice.call(arguments))
-    return this
-  },
-  params: function () {
-    return icebreaker
-      .chain()
-      .values([].slice.call(arguments))
-      .map(function (arg) {
-        if (!isArray(arg)) return [arg]
-        return arg
-      })
-      .flatten()
-      .pull()
-  },
-  cleanup: function (func) {
-    return function (read) {
-      var ended
-      return function (abort, callback) {
-        read(abort, function next(end, data) {
-          if (ended) return
-          if (end) {
-            func(end)
-            return callback(ended = end)
-          }
-          callback(end, data)
-        })
-      }
-    }
-  }
+;[
+    require('pull-stream/sources'),
+    require('pull-stream/throughs'),
+    require('pull-stream/sinks'),
+    require('./util'),
+    require('./sources')
+    
+].forEach(function(streams){
+    for(var k in streams) module.exports[k] = streams[k]
 })
 
-module.exports = icebreaker
+},{"./pull":40,"./sources":41,"./util":44,"pull-stream/sinks":14,"pull-stream/sources":21,"pull-stream/throughs":30}],2:[function(require,module,exports){
 
-},{"inherits":2,"isarray":3,"pull-pair":4,"pull-stream":5}],2:[function(require,module,exports){
-if (typeof Object.create === 'function') {
-  // implementation from standard node.js 'util' module
-  module.exports = function inherits(ctor, superCtor) {
-    ctor.super_ = superCtor
-    ctor.prototype = Object.create(superCtor.prototype, {
-      constructor: {
-        value: ctor,
-        enumerable: false,
-        writable: true,
-        configurable: true
-      }
-    });
-  };
-} else {
-  // old school shim for old browsers
-  module.exports = function inherits(ctor, superCtor) {
-    ctor.super_ = superCtor
-    var TempCtor = function () {}
-    TempCtor.prototype = superCtor.prototype
-    ctor.prototype = new TempCtor()
-    ctor.prototype.constructor = ctor
+function isFunction (f) {
+  return 'function' === typeof f
+}
+
+function isDuplex (d) {
+  return 'object' === typeof d && isSource(d.source) && isSink(d.sink)
+}
+
+function isSource (s) {
+  return isFunction(s) && s.length === 2
+}
+
+function isSink (s) {
+  return isFunction(s) && s.length === 1
+}
+
+exports.isDuplex = isDuplex
+exports.isSource = isSource
+exports.isSink = isSink
+//can't do is through, it will appear as a sink til you git it a source.
+
+
+},{}],3:[function(require,module,exports){
+
+var looper = module.exports = function (fun) {
+  (function next () {
+    var loop = true, returned = false, sync = false
+    do {
+      sync = true; loop = false
+      fun.call(this, function () {
+        if(sync) loop = true
+        else     next()
+      })
+      sync = false
+    } while(loop)
+  })()
+}
+
+},{}],4:[function(require,module,exports){
+// shim for using process in browser
+var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
+}
+function defaultClearTimeout () {
+    throw new Error('clearTimeout has not been defined');
+}
+(function () {
+    try {
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
+        }
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
+    }
+    try {
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
+        }
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
+    }
+} ())
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
+    }
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
+        return setTimeout(fun, 0);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch(e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch(e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
+    }
+
+
+}
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
+        return clearTimeout(marker);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+        }
+    }
+
+
+
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        runTimeout(drainQueue);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+},{}],5:[function(require,module,exports){
+var noop = function () {}
+
+function abortAll(ary, abort, cb) {
+  var n = ary.length
+  if(!n) return cb(abort)
+  ary.forEach(function (f) {
+    if(f) f(abort, next)
+    else next()
+  })
+
+  function next() {
+    if(--n) return
+    cb(abort)
+  }
+  if(!n) next()
+}
+
+module.exports = function (streams) {
+  return function (abort, cb) {
+    ;(function next () {
+      if(abort)
+        abortAll(streams, abort, cb)
+      else if(!streams.length)
+        cb(true)
+      else if(!streams[0])
+        streams.shift(), next()
+      else
+        streams[0](null, function (err, data) {
+          if(err) {
+            streams.shift() //drop the first, has already ended.
+            if(err === true) next()
+            else             abortAll(streams, err, cb)
+          }
+          else
+            cb(null, data)
+        })
+    })()
   }
 }
 
-},{}],3:[function(require,module,exports){
-module.exports = Array.isArray || function (arr) {
-  return Object.prototype.toString.call(arr) == '[object Array]';
-};
 
-},{}],4:[function(require,module,exports){
+
+},{}],6:[function(require,module,exports){
+
+var pushable = require('pull-pushable')
+
+module.exports = function () {
+  var listeners = []
+
+  function notify (message) {
+    // notify by pushing to all listeners
+    for (var i = 0; i < listeners.length; i++) {
+      listeners[i].push(message)
+    }
+    return message
+  }
+
+  notify.listen = function () {
+    // create listener with `onClose` handler
+    var listener = pushable(function onClose () {
+      // if listener is found, delete from list
+      var index = listeners.indexOf(listener)
+      if (index !== -1) listeners.splice(index, 1)
+    })
+    listeners.push(listener)
+    return listener
+  }
+
+  notify.abort = function (err) {
+    // abort by ending all listeners
+    while (listeners.length) listeners[0].end(err)
+  }
+
+  notify.end = function () {
+    return notify.abort(true)
+  }
+
+  return notify
+}
+
+},{"pull-pushable":8}],7:[function(require,module,exports){
 'use strict'
 
 //a pair of pull streams where one drains from the other
@@ -216,26 +348,83 @@ module.exports = function () {
 }
 
 
-},{}],5:[function(require,module,exports){
-'use strict'
+},{}],8:[function(require,module,exports){
+module.exports = pullPushable
 
-var sources  = require('./sources')
-var sinks    = require('./sinks')
-var throughs = require('./throughs')
+function pullPushable (onClose) {
+  // create a buffer for data
+  // that have been pushed
+  // but not yet pulled.
+  var buffer = []
 
-exports = module.exports = require('./pull')
+  // a pushable is a source stream
+  // (abort, cb) => cb(end, data)
+  //
+  // when pushable is pulled,
+  // keep references to abort and cb
+  // so we can call back after
+  // .end(end) or .push(data)
+  var abort, cb
+  function read (_abort, _cb) {
+    if (_abort) {
+      abort = _abort
+      // if there is already a cb waiting, abort it.
+      if (cb) callback(abort)
+    }
+    cb = _cb
+    drain()
+  }
 
-for(var k in sources)
-  exports[k] = sources[k]
+  var ended
+  read.end = function (end) {
+    ended = ended || end || true
+    // attempt to drain
+    drain()
+  }
 
-for(var k in throughs)
-  exports[k] = throughs[k]
+  read.push = function (data) {
+    if (ended) return
+    // if sink already waiting,
+    // we can call back directly.
+    if (cb) {
+      callback(abort, data)
+      return
+    }
+    // otherwise push data and
+    // attempt to drain
+    buffer.push(data)
+    drain()
+  }
 
-for(var k in sinks)
-  exports[k] = sinks[k]
+  return read
 
+  // `drain` calls back to (if any) waiting
+  // sink with abort, end, or next data.
+  function drain () {
+    if (!cb) return
 
-},{"./pull":6,"./sinks":11,"./sources":18,"./throughs":27}],6:[function(require,module,exports){
+    if (abort) callback(abort)
+    else if (!buffer.length && ended) callback(ended)
+    else if (buffer.length) callback(null, buffer.shift())
+  }
+
+  // `callback` calls back to waiting sink,
+  // and removes references to sink cb.
+  function callback (err, val) {
+    var _cb = cb
+    // if error and pushable passed onClose, call it
+    // the first time this stream ends or errors.
+    if (err && onClose) {
+      var c = onClose
+      onClose = null
+      c(err === true ? null : err)
+    }
+    cb = null
+    _cb(err, val)
+  }
+}
+
+},{}],9:[function(require,module,exports){
 'use strict'
 
 module.exports = function pull (a) {
@@ -245,8 +434,25 @@ module.exports = function pull (a) {
     for(var i = 0; i < length; i++)
       args[i] = arguments[i]
     return function (read) {
-      args.unshift(read)
-      return pull.apply(null, args)
+      if (args == null) {
+        throw new TypeError("partial sink should only be called once!")
+      }
+
+      // Grab the reference after the check, because it's always an array now
+      // (engines like that kind of consistency).
+      var ref = args
+      args = null
+
+      // Prioritize common case of small number of pulls.
+      switch (length) {
+      case 1: return pull(read, ref[0])
+      case 2: return pull(read, ref[0], ref[1])
+      case 3: return pull(read, ref[0], ref[1], ref[2])
+      case 4: return pull(read, ref[0], ref[1], ref[2], ref[3])
+      default:
+        ref.unshift(read)
+        return pull.apply(null, ref)
+      }
     }
   }
 
@@ -269,12 +475,7 @@ module.exports = function pull (a) {
   return read
 }
 
-
-
-
-
-
-},{}],7:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 'use strict'
 
 var reduce = require('./reduce')
@@ -286,7 +487,7 @@ module.exports = function collect (cb) {
   }, [], cb)
 }
 
-},{"./reduce":14}],8:[function(require,module,exports){
+},{"./reduce":17}],11:[function(require,module,exports){
 'use strict'
 
 var reduce = require('./reduce')
@@ -297,7 +498,7 @@ module.exports = function concat (cb) {
   }, '', cb)
 }
 
-},{"./reduce":14}],9:[function(require,module,exports){
+},{"./reduce":17}],12:[function(require,module,exports){
 'use strict'
 
 module.exports = function drain (op, done) {
@@ -347,7 +548,7 @@ module.exports = function drain (op, done) {
   return sink
 }
 
-},{}],10:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 'use strict'
 
 function id (e) { return e }
@@ -377,7 +578,7 @@ module.exports = function find (test, cb) {
 
 
 
-},{"../util/prop":34,"./drain":9}],11:[function(require,module,exports){
+},{"../util/prop":37,"./drain":12}],14:[function(require,module,exports){
 'use strict'
 
 module.exports = {
@@ -391,7 +592,7 @@ module.exports = {
 }
 
 
-},{"./collect":7,"./concat":8,"./drain":9,"./find":10,"./log":12,"./on-end":13,"./reduce":14}],12:[function(require,module,exports){
+},{"./collect":10,"./concat":11,"./drain":12,"./find":13,"./log":15,"./on-end":16,"./reduce":17}],15:[function(require,module,exports){
 'use strict'
 
 var drain = require('./drain')
@@ -402,7 +603,7 @@ module.exports = function log (done) {
   }, done)
 }
 
-},{"./drain":9}],13:[function(require,module,exports){
+},{"./drain":12}],16:[function(require,module,exports){
 'use strict'
 
 var drain = require('./drain')
@@ -411,21 +612,31 @@ module.exports = function onEnd (done) {
   return drain(null, done)
 }
 
-},{"./drain":9}],14:[function(require,module,exports){
+},{"./drain":12}],17:[function(require,module,exports){
 'use strict'
 
 var drain = require('./drain')
 
-module.exports = function reduce (reducer, acc, cb) {
-  return drain(function (data) {
+module.exports = function reduce (reducer, acc, cb ) {
+  if(!cb) cb = acc, acc = null
+  var sink = drain(function (data) {
     acc = reducer(acc, data)
   }, function (err) {
     cb(err, acc)
   })
+  if (arguments.length === 2)
+    return function (source) {
+      source(null, function (end, data) {
+        //if ended immediately, and no initial...
+        if(end) return cb(end === true ? null : end)
+        acc = data; sink(source)
+      })
+    }
+  else
+    return sink
 }
 
-
-},{"./drain":9}],15:[function(require,module,exports){
+},{"./drain":12}],18:[function(require,module,exports){
 'use strict'
 
 module.exports = function count (max) {
@@ -440,7 +651,7 @@ module.exports = function count (max) {
 
 
 
-},{}],16:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 'use strict'
 //a stream that ends immediately.
 module.exports = function empty () {
@@ -449,7 +660,7 @@ module.exports = function empty () {
   }
 }
 
-},{}],17:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 'use strict'
 //a stream that errors immediately.
 module.exports = function error (err) {
@@ -459,7 +670,7 @@ module.exports = function error (err) {
 }
 
 
-},{}],18:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 'use strict'
 module.exports = {
   keys: require('./keys'),
@@ -471,7 +682,7 @@ module.exports = {
   error: require('./error')
 }
 
-},{"./count":15,"./empty":16,"./error":17,"./infinite":19,"./keys":20,"./once":21,"./values":22}],19:[function(require,module,exports){
+},{"./count":18,"./empty":19,"./error":20,"./infinite":22,"./keys":23,"./once":24,"./values":25}],22:[function(require,module,exports){
 'use strict'
 module.exports = function infinite (generate) {
   generate = generate || Math.random
@@ -483,7 +694,7 @@ module.exports = function infinite (generate) {
 
 
 
-},{}],20:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 'use strict'
 var values = require('./values')
 module.exports = function (object) {
@@ -492,7 +703,7 @@ module.exports = function (object) {
 
 
 
-},{"./values":22}],21:[function(require,module,exports){
+},{"./values":25}],24:[function(require,module,exports){
 'use strict'
 var abortCb = require('../util/abort-cb')
 
@@ -510,7 +721,7 @@ module.exports = function once (value, onAbort) {
 
 
 
-},{"../util/abort-cb":33}],22:[function(require,module,exports){
+},{"../util/abort-cb":36}],25:[function(require,module,exports){
 'use strict'
 var abortCb = require('../util/abort-cb')
 
@@ -528,12 +739,14 @@ module.exports = function values (array, onAbort) {
   return function (abort, cb) {
     if(abort)
       return abortCb(cb, abort, onAbort)
-    cb(i >= array.length || null, array[i++])
+    if(i >= array.length)
+      cb(true)
+    else
+      cb(null, array[i++])
   }
 }
 
-
-},{"../util/abort-cb":33}],23:[function(require,module,exports){
+},{"../util/abort-cb":36}],26:[function(require,module,exports){
 'use strict'
 
 function id (e) { return e }
@@ -578,7 +791,7 @@ module.exports = function asyncMap (map) {
 
 
 
-},{"../util/prop":34}],24:[function(require,module,exports){
+},{"../util/prop":37}],27:[function(require,module,exports){
 'use strict'
 
 var tester = require('../util/tester')
@@ -589,7 +802,7 @@ module.exports = function filterNot (test) {
   return filter(function (data) { return !test(data) })
 }
 
-},{"../util/tester":35,"./filter":25}],25:[function(require,module,exports){
+},{"../util/tester":38,"./filter":28}],28:[function(require,module,exports){
 'use strict'
 
 var tester = require('../util/tester')
@@ -615,7 +828,7 @@ module.exports = function filter (test) {
 }
 
 
-},{"../util/tester":35}],26:[function(require,module,exports){
+},{"../util/tester":38}],29:[function(require,module,exports){
 'use strict'
 
 var values = require('../sources/values')
@@ -664,7 +877,7 @@ module.exports = function flatten () {
 }
 
 
-},{"../sources/once":21,"../sources/values":22}],27:[function(require,module,exports){
+},{"../sources/once":24,"../sources/values":25}],30:[function(require,module,exports){
 'use strict'
 
 module.exports = {
@@ -682,7 +895,7 @@ module.exports = {
 
 
 
-},{"./async-map":23,"./filter":25,"./filter-not":24,"./flatten":26,"./map":28,"./non-unique":29,"./take":30,"./through":31,"./unique":32}],28:[function(require,module,exports){
+},{"./async-map":26,"./filter":28,"./filter-not":27,"./flatten":29,"./map":31,"./non-unique":32,"./take":33,"./through":34,"./unique":35}],31:[function(require,module,exports){
 'use strict'
 
 function id (e) { return e }
@@ -707,7 +920,7 @@ module.exports = function map (mapper) {
   }
 }
 
-},{"../util/prop":34}],29:[function(require,module,exports){
+},{"../util/prop":37}],32:[function(require,module,exports){
 'use strict'
 
 var unique = require('./unique')
@@ -717,7 +930,7 @@ module.exports = function nonUnique (field) {
   return unique(field, true)
 }
 
-},{"./unique":32}],30:[function(require,module,exports){
+},{"./unique":35}],33:[function(require,module,exports){
 'use strict'
 
 //read a number of items and then stop.
@@ -760,7 +973,7 @@ module.exports = function take (test, opts) {
   }
 }
 
-},{}],31:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 'use strict'
 
 //a pass through stream that doesn't change the value.
@@ -785,7 +998,7 @@ module.exports = function through (op, onEnd) {
   }
 }
 
-},{}],32:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 'use strict'
 
 function id (e) { return e }
@@ -805,7 +1018,7 @@ module.exports = function unique (field, invert) {
 }
 
 
-},{"../util/prop":34,"./filter":25}],33:[function(require,module,exports){
+},{"../util/prop":37,"./filter":28}],36:[function(require,module,exports){
 module.exports = function abortCb(cb, abort, onAbort) {
   cb(abort)
   onAbort && onAbort(abort === true ? null: abort)
@@ -813,7 +1026,7 @@ module.exports = function abortCb(cb, abort, onAbort) {
 }
 
 
-},{}],34:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 module.exports = function prop (key) {
   return key && (
     'string' == typeof key
@@ -824,7 +1037,7 @@ module.exports = function prop (key) {
   )
 }
 
-},{}],35:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 var prop = require('./prop')
 
 function id (e) { return e }
@@ -837,5 +1050,344 @@ module.exports = function tester (test) {
   )
 }
 
-},{"./prop":34}]},{},[1])(1)
+},{"./prop":37}],39:[function(require,module,exports){
+(function (process){
+var pull = require('pull-stream/pull')
+var looper = require('looper')
+
+function destroy(stream, cb) {
+  function onClose () {
+    cleanup(); cb()
+  }
+  function onError (err) {
+    cleanup(); cb(err)
+  }
+  function cleanup() {
+    stream.removeListener('close', onClose)
+    stream.removeListener('error', onError)
+  }
+  stream.on('close', onClose)
+  stream.on('error', onError)
+}
+
+function destroy (stream) {
+  if(!stream.destroy)
+    console.error(
+      'warning, stream-to-pull-stream: \n'
+    + 'the wrapped node-stream does not implement `destroy`, \n'
+    + 'this may cause resource leaks.'
+    )
+  else stream.destroy()
+
+}
+
+function write(read, stream, cb) {
+  var ended, closed = false, did
+  function done () {
+    if(did) return
+    did = true
+    cb && cb(ended === true ? null : ended)
+  }
+
+  function onClose () {
+    if(closed) return
+    closed = true
+    cleanup()
+    if(!ended) read(ended = true, done)
+    else       done()
+  }
+  function onError (err) {
+    cleanup()
+    if(!ended) read(ended = err, done)
+  }
+  function cleanup() {
+    stream.on('finish', onClose)
+    stream.removeListener('close', onClose)
+    stream.removeListener('error', onError)
+  }
+  stream.on('close', onClose)
+  stream.on('finish', onClose)
+  stream.on('error', onError)
+  process.nextTick(function () {
+    looper(function (next) {
+      read(null, function (end, data) {
+        ended = ended || end
+        //you can't "end" a stdout stream, so this needs to be handled specially.
+        if(end === true)
+          return stream._isStdio ? done() : stream.end()
+
+        if(ended = ended || end) {
+          destroy(stream)
+          return done(ended)
+        }
+
+        //I noticed a problem streaming to the terminal:
+        //sometimes the end got cut off, creating invalid output.
+        //it seems that stdout always emits "drain" when it ends.
+        //so this seems to work, but i have been unable to reproduce this test
+        //automatically, so you need to run ./test/stdout.js a few times and the end is valid json.
+        if(stream._isStdio)
+          stream.write(data, function () { next() })
+        else {
+          var pause = stream.write(data)
+          if(pause === false)
+            stream.once('drain', next)
+          else next()
+        }
+      })
+    })
+  })
+}
+
+function first (emitter, events, handler) {
+  function listener (val) {
+    events.forEach(function (e) {
+      emitter.removeListener(e, listener)
+    })
+    handler(val)
+  }
+  events.forEach(function (e) {
+    emitter.on(e, listener)
+  })
+  return emitter
+}
+
+function read2(stream) {
+  var ended = false, waiting = false
+  var _cb
+
+  function read () {
+    var data = stream.read()
+    if(data !== null && _cb) {
+      var cb = _cb; _cb = null
+      cb(null, data)
+    }
+  }
+
+  stream.on('readable', function () {
+    waiting = true
+    _cb && read()
+  })
+  .on('end', function () {
+    ended = true
+    _cb && _cb(ended)
+  })
+  .on('error', function (err) {
+    ended = err
+    _cb && _cb(ended)
+  })
+
+  return function (end, cb) {
+    _cb = cb
+    if(ended)
+      cb(ended)
+    else if(waiting)
+      read()
+  }
+}
+
+function read1(stream) {
+  var buffer = [], cbs = [], ended, paused = false
+
+  var draining
+  function drain() {
+    while((buffer.length || ended) && cbs.length)
+      cbs.shift()(buffer.length ? null : ended, buffer.shift())
+    if(!buffer.length && (paused)) {
+      paused = false
+      stream.resume()
+    }
+  }
+
+  stream.on('data', function (data) {
+    buffer.push(data)
+    drain()
+    if(buffer.length && stream.pause) {
+      paused = true
+      stream.pause()
+    }
+  })
+  stream.on('end', function () {
+    ended = true
+    drain()
+  })
+  stream.on('close', function () {
+    ended = true
+    drain()
+  })
+  stream.on('error', function (err) {
+    ended = err
+    drain()
+  })
+  return function (abort, cb) {
+    if(!cb) throw new Error('*must* provide cb')
+    if(abort) {
+      function onAbort () {
+        while(cbs.length) cbs.shift()(abort)
+        cb(abort)
+      }
+      //if the stream happens to have already ended, then we don't need to abort.
+      if(ended) return onAbort()
+      stream.once('close', onAbort)
+      destroy(stream)
+    }
+    else {
+      cbs.push(cb)
+      drain()
+    }
+  }
+}
+
+var read = read1
+
+var sink = function (stream, cb) {
+  return function (read) {
+    return write(read, stream, cb)
+  }
+}
+
+var source = function (stream) {
+  return read1(stream)
+}
+
+exports = module.exports = function (stream, cb) {
+  return (
+    (stream.writable && stream.write)
+    ? stream.readable
+      ? function(_read) {
+          write(_read, stream, cb);
+          return read1(stream)
+        }
+      : sink(stream, cb)
+    : source(stream)
+  )
+}
+
+exports.sink = sink
+exports.source = source
+exports.read = read
+exports.read1 = read1
+exports.read2 = read2
+exports.duplex = function (stream, cb) {
+  return {
+    source: source(stream),
+    sink: sink(stream, cb)
+  }
+}
+exports.transform = function (stream) {
+  return function (read) {
+    var _source = source(stream)
+    sink(stream)(read); return _source
+  }
+}
+
+
+
+
+
+
+
+
+
+
+}).call(this,require('_process'))
+},{"_process":4,"looper":3,"pull-stream/pull":9}],40:[function(require,module,exports){
+'use strict'
+var pull = require('pull-stream/pull')
+var params = require('./sources/params') 
+var isSource = require('is-pull-stream').isSource
+var isDuplex = require('is-pull-stream').isDuplex
+var cat = require('pull-cat')
+
+module.exports = function(){
+    
+    var commands = [];
+    
+    [].slice.call(arguments).forEach(function(arg){
+        if (typeof arg !=="function" && !(arg!=null && isDuplex(arg))) commands.push(params(arg))
+        else commands.push(arg)
+    });
+
+    var rest = []
+    var sources = commands.filter(function(item){
+        if(isSource(item ))  return true
+        rest.push(item)
+        return false
+    })
+
+    if(sources.length<=1) return pull.apply(null,commands)
+    
+    return pull.apply(null,[].concat([cat(sources)],rest))
+}
+},{"./sources/params":43,"is-pull-stream":2,"pull-cat":5,"pull-stream/pull":9}],41:[function(require,module,exports){
+module.exports = {
+  params:require('./params'),
+  notify:require('./notify'),
+  pushable:require('pull-pushable')
+}
+},{"./notify":42,"./params":43,"pull-pushable":8}],42:[function(require,module,exports){
+'use strict'
+var Notify = require('pull-notify')
+module.exports=function () {
+  var notify = Notify.apply(Notify, [].slice.call(arguments))
+  var listen = notify.listen
+
+  notify.listen = function () {
+      var l = listen.apply(notify, arguments)
+      var s = function source() {
+      l.apply(null, arguments)
+      }
+
+      s.end = l.end
+      return s
+  }
+
+  notify.end = function (err) {
+      notify.abort(err || true)
+  }
+
+  return notify
+}
+},{"pull-notify":6}],43:[function(require,module,exports){
+'use strict'
+var pull = require('pull-stream/pull')
+var values = require('pull-stream/sources/values')
+var map = require('pull-stream/throughs/map')
+var flatten = require('pull-stream/throughs/flatten');
+
+module.exports = function () {
+  return pull(
+    values(arguments),
+    map(function (arg) {
+      if (!Array.isArray(arg)) return [arg]
+      return arg
+    }),
+    flatten()
+    )
+  }
+},{"pull-stream/pull":9,"pull-stream/sources/values":25,"pull-stream/throughs/flatten":29,"pull-stream/throughs/map":31}],44:[function(require,module,exports){
+module.exports = {
+  isFunction:require('./isFunction'),
+  isPlainObject:require('./isPlainObject'),
+  isString:require('./isString'),
+  isArray : Array.isArray,
+  pair:require('pull-pair'),
+  toPull:require('stream-to-pull-stream'),
+  cat:require('pull-cat')
+}
+},{"./isFunction":45,"./isPlainObject":46,"./isString":47,"pull-cat":5,"pull-pair":7,"stream-to-pull-stream":39}],45:[function(require,module,exports){
+module.exports = function (f) {
+    return 'function' === typeof f
+}
+},{}],46:[function(require,module,exports){
+module.exports=function (o) {
+    return o && 'object' === typeof o && !Array.isArray(o)
+}
+
+},{}],47:[function(require,module,exports){
+module.exports=function (s) {
+    return typeof s === 'string'
+}
+
+},{}]},{},[1])(1)
 });

@@ -1,7 +1,7 @@
 var test = require('tape')
-var _ = require('../lib/icebreaker')
+var _ = require('../')
 
-test('map 1', function (t) {
+test('map', function (t) {
   t.plan(2)
 
   _(
@@ -10,21 +10,6 @@ test('map 1', function (t) {
       return m * 10
     }),
     _.collect(function (err, data) {
-      t.notOk(err)
-      t.deepEqual(data, [10, 20, 30])
-    })
-  )
-})
-
-test('map 2', function (t) {
-  t.plan(2)
-
-  _(
-    _.chain([1, 2, 3])
-    .map(function (m) {
-      return m * 10
-    })
-    .collect(function (err, data) {
       t.notOk(err)
       t.deepEqual(data, [10, 20, 30])
     })
