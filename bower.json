@@ -1,7 +1,7 @@
 {
   "name": "icebreaker-js",
   "main": "dist/icebreaker.js",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "homepage": "https://github.com/alligator-io/icebreaker",
   "authors": [
     "Markus Wunderlin <markus@sonium.org>"
