@@ -1357,7 +1357,7 @@ var flatten = require('pull-stream/throughs/flatten');
 
 module.exports = function () {
   return pull(
-    values(arguments),
+    values([].slice.call(arguments)),
     map(function (arg) {
       if (!Array.isArray(arg)) return [arg]
       return arg
