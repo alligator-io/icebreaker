@@ -28,14 +28,14 @@
     "pull-cat": "^1.1.11",
     "pull-notify": "^0.1.1",
     "pull-pair": "^1.1.0",
-    "pull-pushable": "^2.0.1",
-    "pull-stream": "^3.5.0",
+    "pull-pushable": "^2.1.1",
+    "pull-stream": "^3.6.0",
     "stream-to-pull-stream": "^1.7.2"
   },
   "devDependencies": {
     "zuul": "^3.11.1",
-    "browserify": "^13.1.1",
-    "tape": "^4.6.3",
-    "uglify-js": "^2.7.4"
+    "browserify": "^14.4.0",
+    "tape": "^4.8.0",
+    "uglify-js": "^3.0.27"
   }
 }
