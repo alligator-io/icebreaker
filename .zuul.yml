@@ -3,25 +3,17 @@ capabilities:
   record-video: false
   record-screenshots: false
 browsers:
-  - name: android
-    version: [4.4,5.0]
-    platform: Linux
   - name: firefox
-    version: [37,38]
-    platform: Windows 2012 R2
+    version: [61,62]
+    platform: Windows 10
   - name: chrome
-    version: [42,43]
-    platform: Windows 2012 R2
+    version: [68,69]
+    platform: Windows 10
   - name: ie
-    version: 9..11
-    platform: Windows 2008
+    version: 11
+    platform: Windows 10
   - name: MicrosoftEdge
     platform: Windows 10
     version: latest
   - name: safari
-    version: 7..latest
-  - name: ipad
-    version: [7.1,8.1,9.2]
-  - name: opera
     version: latest
-    platform: Windows 2003
