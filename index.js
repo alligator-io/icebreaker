@@ -1,7 +1,6 @@
  'use strict'
  module.exports = require('./pull');
-
-;[
+[
     require('pull-stream/sources'),
     require('pull-stream/throughs'),
     require('pull-stream/sinks'),
