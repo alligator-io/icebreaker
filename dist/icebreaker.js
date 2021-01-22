@@ -1,8 +1,7 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.icebreaker = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
  'use strict'
  module.exports = require('./pull');
-
-;[
+[
     require('pull-stream/sources'),
     require('pull-stream/throughs'),
     require('pull-stream/sinks'),
@@ -12,8 +11,7 @@
 ].forEach(function(streams){
     for(var k in streams) module.exports[k] = streams[k]
 })
-
-},{"./pull":40,"./sources":41,"./util":44,"pull-stream/sinks":14,"pull-stream/sources":21,"pull-stream/throughs":30}],2:[function(require,module,exports){
+},{"./pull":40,"./sources":42,"./util":45,"pull-stream/sinks":14,"pull-stream/sources":21,"pull-stream/throughs":30}],2:[function(require,module,exports){
 
 function isFunction (f) {
   return 'function' === typeof f
@@ -1076,24 +1074,9 @@ module.exports = function tester (test) {
 }
 
 },{"./prop":37}],39:[function(require,module,exports){
-(function (process){
+(function (process){(function (){
 var pull = require('pull-stream/pull')
 var looper = require('looper')
-
-function destroy(stream, cb) {
-  function onClose () {
-    cleanup(); cb()
-  }
-  function onError (err) {
-    cleanup(); cb(err)
-  }
-  function cleanup() {
-    stream.removeListener('close', onClose)
-    stream.removeListener('error', onError)
-  }
-  stream.on('close', onClose)
-  stream.on('error', onError)
-}
 
 function destroy (stream) {
   if(!stream.destroy)
@@ -1315,7 +1298,7 @@ exports.transform = function (stream) {
 
 
 
-}).call(this,require('_process'))
+}).call(this)}).call(this,require('_process'))
 },{"_process":4,"looper":3,"pull-stream/pull":9}],40:[function(require,module,exports){
 'use strict'
 var pull = require('pull-stream/pull')
@@ -1344,13 +1327,36 @@ module.exports = function(){
     
     return pull.apply(null,[].concat([cat(sources)],rest))
 }
-},{"./sources/params":43,"is-pull-stream":2,"pull-cat":5,"pull-stream/pull":9}],41:[function(require,module,exports){
+},{"./sources/params":44,"is-pull-stream":2,"pull-cat":5,"pull-stream/pull":9}],41:[function(require,module,exports){
+var Notify = require("./notify") 
+module.exports= function(){
+    var notify = Notify()
+    var queue = []
+    return {
+        emit:function(event){
+            if(queue)return queue.push(event)
+            notify(event)
+        },
+        listen:function(){
+            var source = notify.listen()
+            if(queue){
+                queue.forEach(notify)
+                queue = null
+            }
+          
+            return source
+        },
+        end:notify.end
+    }
+}
+},{"./notify":43}],42:[function(require,module,exports){
 module.exports = {
   params:require('./params'),
   notify:require('./notify'),
+  events:require('./events'),
   pushable:require('pull-pushable')
 }
-},{"./notify":42,"./params":43,"pull-pushable":8}],42:[function(require,module,exports){
+},{"./events":41,"./notify":43,"./params":44,"pull-pushable":8}],43:[function(require,module,exports){
 'use strict'
 var Notify = require('pull-notify')
 module.exports=function () {
@@ -1373,7 +1379,7 @@ module.exports=function () {
 
   return notify
 }
-},{"pull-notify":6}],43:[function(require,module,exports){
+},{"pull-notify":6}],44:[function(require,module,exports){
 'use strict'
 var pull = require('pull-stream/pull')
 var values = require('pull-stream/sources/values')
@@ -1390,7 +1396,7 @@ module.exports = function () {
     flatten()
     )
   }
-},{"pull-stream/pull":9,"pull-stream/sources/values":25,"pull-stream/throughs/flatten":29,"pull-stream/throughs/map":31}],44:[function(require,module,exports){
+},{"pull-stream/pull":9,"pull-stream/sources/values":25,"pull-stream/throughs/flatten":29,"pull-stream/throughs/map":31}],45:[function(require,module,exports){
 module.exports = {
   isFunction:require('./isFunction'),
   isPlainObject:require('./isPlainObject'),
@@ -1400,16 +1406,16 @@ module.exports = {
   toPull:require('stream-to-pull-stream'),
   cat:require('pull-cat')
 }
-},{"./isFunction":45,"./isPlainObject":46,"./isString":47,"pull-cat":5,"pull-pair":7,"stream-to-pull-stream":39}],45:[function(require,module,exports){
+},{"./isFunction":46,"./isPlainObject":47,"./isString":48,"pull-cat":5,"pull-pair":7,"stream-to-pull-stream":39}],46:[function(require,module,exports){
 module.exports = function (f) {
     return 'function' === typeof f
 }
-},{}],46:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 module.exports=function (o) {
     return o && 'object' === typeof o && !Array.isArray(o)
 }
 
-},{}],47:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 module.exports=function (s) {
     return typeof s === 'string'
 }
