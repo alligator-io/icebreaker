@@ -1,14 +1,14 @@
-const Notify = require("./notify") 
+var Notify = require("./notify") 
 module.exports= function(){
-    const notify = Notify()
-    let queue = []
+    var notify = Notify()
+    var queue = []
     return {
         emit:function(event){
             if(queue)return queue.push(event)
             notify(event)
         },
         listen:function(){
-            const source = notify.listen()
+            var source = notify.listen()
             if(queue){
                 queue.forEach(notify)
                 queue = null
